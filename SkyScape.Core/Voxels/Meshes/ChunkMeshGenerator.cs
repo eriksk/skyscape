@@ -40,17 +40,8 @@ namespace SkyScape.Core.Voxels.Meshes
                                 var position = new VoxelPosition(chunk.X + x, chunk.Y + y, chunk.Z + z);
                                 var empty = Voxel.Empty;
 
-                                VoxelMask mask = VoxelMask.None;
-
-                                // TODO: this still doesn't work
-
-                                mask |= world.Get(position.X + 1, position.Y, position.Z) == empty ? VoxelMask.Right : VoxelMask.None;
-                                mask |= world.Get(position.X - 1, position.Y, position.Z) == empty ? VoxelMask.Left : VoxelMask.None;
-                                mask |= world.Get(position.X, position.Y + 1, position.Z) == empty ? VoxelMask.Up : VoxelMask.None;
-                                mask |= world.Get(position.X, position.Y - 1, position.Z) == empty ? VoxelMask.Down : VoxelMask.None;
-                                mask |= world.Get(position.X, position.Y, position.Z + 1) == empty ? VoxelMask.Forward : VoxelMask.None;
-                                mask |= world.Get(position.X, position.Y, position.Z - 1) == empty ? VoxelMask.Back : VoxelMask.None;
-
+                                VoxelMask mask = world.GetMask(position);
+                                
 
                                 // should we add a block? 
                                 if (mask == VoxelMask.None) // no sides are empty
@@ -58,11 +49,15 @@ namespace SkyScape.Core.Voxels.Meshes
                                     //indexOffset += AddBlock(data, indexOffset, x, y, z, Color.Magenta, VoxelMask.All);
                                     //SkippedBlocks++;
                                 }
-                                else if(mask == VoxelMask.All) // all sides are empty
-                                {
+                                //else if(mask == VoxelMask.All) // all sides are empty
+                                //{
 
-                                    indexOffset += AddBlock(data, indexOffset, x, y, z, Voxel.Types[block].Color, mask);
-                                    //indexOffset += AddBlock(data, indexOffset, x, y, z, Color.Orange, mask);
+                                //    indexOffset += AddBlock(data, indexOffset, x, y, z, Voxel.Types[block].Color, mask);
+                                //    //indexOffset += AddBlock(data, indexOffset, x, y, z, Color.Orange, mask);
+                                //}
+                                else if (mask != VoxelMask.All)
+                                {
+                                    
                                 }
                                 else
                                 {

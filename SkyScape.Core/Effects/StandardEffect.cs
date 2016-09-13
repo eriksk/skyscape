@@ -26,6 +26,8 @@ namespace SkyScape.Core.Effects
         public Color DiffuseColor { get; set; } = new Color(255, 242, 179);
         public Vector3 DiffuseLightDirection { get; set; } = (Vector3.Right + Vector3.Down + Vector3.Forward).Normalized();
 
+        public float Alpha { get; set; } = 1f;
+
         public float FarClip { get; set; } = 100f;
 
         protected override bool OnApply()
@@ -47,6 +49,9 @@ namespace SkyScape.Core.Effects
 
             // Depth
             Parameters["_FarClip"].SetValue(FarClip);
+
+            // Color
+            Parameters["_Alpha"].SetValue(Alpha);
 
             return base.OnApply();
         }

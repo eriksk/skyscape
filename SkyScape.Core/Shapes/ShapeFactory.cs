@@ -102,41 +102,10 @@ namespace SkyScape.Core.Shapes
 
         public static int[] CreateCubeIndices(CubeFace face)
         {
-            switch (face)
+            return new int[]
             {
-                case CubeFace.Left:
-                    return new int[]
-                    {
-                        0,  1,  2,      0,  2,  3,   // left
-                    }.Reverse().ToArray();
-                case CubeFace.Right:
-                    return new int[]
-                    {
-                        0,  1,  2,      0,  2,  3,   // right
-                    }.Reverse().ToArray();
-                case CubeFace.Top:
-                    return new int[]
-                    {
-                        0,  1,  2,      0,  2,  3,   // top
-                    }.Reverse().ToArray();
-                case CubeFace.Bottom:
-                    return new int[]
-                    {
-                        0,  1,  2,      0,  2,  3,  // bottom
-                    }.Reverse().ToArray();
-                case CubeFace.Front:
-                    return new int[]
-                    {
-                        0,  1,  2,      0,  2,  3,    // front
-                    }.Reverse().ToArray();
-                case CubeFace.Back:
-                    return new int[]
-                    {
-                        0,  1,  2,      0,  2,  3,   // back
-                    }.Reverse().ToArray();
-                default:
-                    throw new Exception("Invalid face");
-            }
+               3,  2,  0,      2,  1,  0
+            };
         }
 
         public static Vector3[] CreateCubeNormals(CubeFace face)

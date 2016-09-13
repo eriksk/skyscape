@@ -11,7 +11,8 @@ namespace SkyScape.Core.Voxels
 {
     public class World
     {
-        public const int ChunkSize = 64;
+        public static int ChunkSize = 16;
+        public static bool UseMultiThreading = false;
 
         private Dictionary<VoxelPosition, Chunk> _chunks;
         private object _chunksLock = new object();
@@ -44,48 +45,59 @@ namespace SkyScape.Core.Voxels
         {
             // http://gamedev.stackexchange.com/questions/65800/when-storing-voxels-in-chunks-how-do-i-access-them-at-the-world-level
 
-            //if (worldX < 0) return Voxel.Empty; // TODO: handle negative cells
-            //if (worldY < 0) return Voxel.Empty; // TODO: handle negative cells
-            //if (worldZ < 0) return Voxel.Empty; // TODO: handle negative cells
+            var chunkPosition = GetChunkPositionFromWorldPosition(new VoxelPosition(worldX, worldY, worldZ));
 
+            var chunk = GetOrCreateChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
 
-            int chunkX = worldX / ChunkSize;
-            int chunkY = worldY / ChunkSize;
-            int chunkZ = worldZ / ChunkSize;
+            var local = WorldToLocal(new VoxelPosition(worldX, worldY, worldZ), chunk);
 
-            var chunk = GetOrCreateChunk(chunkX, chunkY, chunkZ);
-
-            var localX = worldX % ChunkSize; //worldX - (chunkX * ChunkSize);
-            var localY = worldY % ChunkSize; //worldY - (chunkY * ChunkSize);
-            var localZ = worldZ % ChunkSize; //worldZ - (chunkZ * ChunkSize);
-
-            return chunk.Get(localX, localY, localZ);
+            return chunk.Get(local.X, local.Y, local.Z);
         }
 
         public void Set(int worldX, int worldY, int worldZ, int value)
         {
-            //if (worldX < 0) throw new NotImplementedException("Negative cells");
-            //if (worldY < 0) throw new NotImplementedException("Negative cells");
-            //if (worldZ < 0) throw new NotImplementedException("Negative cells");
+            var chunkPosition = GetChunkPositionFromWorldPosition(new VoxelPosition(worldX, worldY, worldZ));
 
-            int chunkX = worldX / ChunkSize;
-            int chunkY = worldY / ChunkSize;
-            int chunkZ = worldZ / ChunkSize;
+            var chunk = GetOrCreateChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
 
-            //int chunkX = (int)Math.Floor(worldX / (float)ChunkSize);
-            //int chunkY = (int)Math.Floor(worldY / (float)ChunkSize);
-            //int chunkZ = (int)Math.Floor(worldZ / (float)ChunkSize);
+            var local = WorldToLocal(new VoxelPosition(worldX, worldY, worldZ), chunk);
 
-            var chunk = GetOrCreateChunk(chunkX, chunkY, chunkZ);
-
-            var localX = worldX % ChunkSize; //worldX - (chunkX * ChunkSize);
-            var localY = worldY % ChunkSize; //worldY - (chunkY * ChunkSize);
-            var localZ = worldZ % ChunkSize; //worldZ - (chunkZ * ChunkSize);
-
-            chunk.Set(localX, localY, localZ, value);
+            chunk.Set(local.X, local.Y, local.Z, value);
         }
 
-        private Chunk GetOrCreateChunk(int chunkX, int chunkY, int chunkZ)
+        public VoxelPosition GetChunkPositionFromWorldPosition(VoxelPosition worldPosition)
+        {
+            int chunkX = worldPosition.X / ChunkSize;
+            int chunkY = worldPosition.Y / ChunkSize;
+            int chunkZ = worldPosition.Z / ChunkSize;
+
+            if (worldPosition.X < 0)
+                chunkX -= 1;
+            if (worldPosition.Y < 0)
+                chunkY -= 1;
+            if (worldPosition.Z < 0)
+                chunkZ -= 1;
+
+            return new VoxelPosition(chunkX, chunkY, chunkZ);
+        }
+
+        public VoxelPosition WorldToLocal(VoxelPosition worldPosition, Chunk relativeToChunk)
+        {
+            var localX = worldPosition.X - (relativeToChunk.X * ChunkSize);
+            var localY = worldPosition.Y - (relativeToChunk.Y * ChunkSize);
+            var localZ = worldPosition.Z - (relativeToChunk.Z * ChunkSize);
+
+            if (relativeToChunk.X < 0)
+                localX--;
+            if (relativeToChunk.Y < 0)
+                localY--;
+            if (relativeToChunk.Z < 0)
+                localZ--;
+
+            return new VoxelPosition(localX, localY, localZ);
+        }
+
+        public Chunk GetOrCreateChunk(int chunkX, int chunkY, int chunkZ)
         {
             lock (_chunksLock)
             {
@@ -132,6 +144,43 @@ namespace SkyScape.Core.Voxels
                     effect.World = chunk.View;
                     chunk.Render(graphics, effect);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gets a mask with info about surrounding voxels
+        /// VoxelMask describes the sides that DO NOT have anything blocking them
+        /// i.e the faces that are visible should be rendered
+        /// </summary>
+        /// <param name="worldPosition"></param>
+        /// <returns></returns>
+        public VoxelMask GetMask(VoxelPosition worldPosition)
+        {
+            var mask = VoxelMask.None;
+
+            if(Get(worldPosition.X + 1, worldPosition.Y, worldPosition.Z) == Voxel.Empty)
+                mask |= VoxelMask.Right;
+            if (Get(worldPosition.X - 1, worldPosition.Y, worldPosition.Z) == Voxel.Empty)
+                mask |= VoxelMask.Left;
+            if (Get(worldPosition.X, worldPosition.Y + 1, worldPosition.Z) == Voxel.Empty)
+                mask |= VoxelMask.Up;
+            if (Get(worldPosition.X, worldPosition.Y - 1, worldPosition.Z) == Voxel.Empty)
+                mask |= VoxelMask.Down;
+            if (Get(worldPosition.X, worldPosition.Y, worldPosition.Z + 1) == Voxel.Empty)
+                mask |= VoxelMask.Forward;
+            if (Get(worldPosition.X, worldPosition.Y, worldPosition.Z - 1) == Voxel.Empty)
+                mask |= VoxelMask.Back;
+
+            return mask;
+        }
+
+        public void Clear()
+        {
+            lock (_chunksLock)
+            {
+                foreach (var chunk in _chunks.Values)
+                    chunk.Clear();
+                _chunks.Clear();
             }
         }
     }

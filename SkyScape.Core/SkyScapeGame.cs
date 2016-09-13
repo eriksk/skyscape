@@ -113,7 +113,7 @@ namespace SkyScape.Core
 
         private void Generate()
         {
-
+            _effect.Alpha = 1f;
             var rand = new Random();
 
             var sw = new Stopwatch();
@@ -124,41 +124,43 @@ namespace SkyScape.Core
 
             var perlinTex = _content.Load<Texture2D>(@"Gfx/perlin_1");
             var pixels = TextureTo2DArray(perlinTex);
-            int offset = 32;
+            int offset = -worldSize / 2;
 
-            for (int x = 0; x < pixels.GetLength(0)/ 4; x++)
-            {
-                for (int z = 0; z < pixels.GetLength(1) / 4; z++)
-                {
-                    var mag = Math.Min(pixels[z, x].R / 2, 64);
-
-                    //_world.Set(x + 32, mag + 32, z + 32, Voxel.Grass);
-
-                    for (int y = 0; y < mag; y++)
-                    {
-                        var voxel = (int)MathHelper.Lerp(0, Voxel.VoxelTypes.Length, y / (float)128) + 1;
-                        _world.Set(x + offset, y + offset, z + offset, voxel);
-                    }
-
-                }
-            }
-
-            //for (int x = 0; x < worldSize; x++)
+            //for (int x = 0; x < pixels.GetLength(0) / 8; x++)
             //{
-            //    for (int z = 0; z < worldSize; z++)
+            //    for (int z = 0; z < pixels.GetLength(1) / 8; z++)
             //    {
-            //        var perlin = 1f + NoiseGenerator.Noise(x + seed, z + seed);
+            //        var mag = Math.Min(pixels[z, x].R / 2, 64);
 
-            //        int height = (int)(perlin * worldSize * 0.3f);
-            //        for (int y = 0; y < height; y++)
+            //        //_world.Set(x + 32, mag + 32, z + 32, Voxel.Grass);
+
+            //        for (int y = 0; y < mag; y++)
             //        {
-            //            _world.Set(x, y, z, Voxel.Grass);
+            //            var voxel = (int)MathHelper.Lerp(0, Voxel.VoxelTypes.Length, y / (float)128) + 1;
+            //            _world.Set(x + offset, y + offset, z + offset, voxel);
             //        }
-            //        // stair
-            //        //_world.Set(x, worldSize - z, z, Voxel.Grass);
 
             //    }
             //}
+
+            _world.Clear();
+
+            for (int x = 0; x < worldSize; x++)
+            {
+                for (int z = 0; z < worldSize; z++)
+                {
+                    var perlin = 1f + NoiseGenerator.Noise(x + seed, z + seed);
+
+                    int height = (int)(perlin * worldSize * 0.2f);
+                    for (int y = 0; y < height; y++)
+                    {
+                        _world.Set(x + offset, y + offset, z + offset, Voxel.Grass);
+                    }
+                    // stair
+                    //_world.Set(x, worldSize - z, z, Voxel.Grass);
+
+                }
+            }
 
             //for (int i = 0; i < 32; i++)
             //{
@@ -322,7 +324,7 @@ namespace SkyScape.Core
             else
             {
                 _graphics.SetRenderTarget(null);
-                _graphics.Clear(ClearOptions.Target | ClearOptions.DepthBuffer | ClearOptions.Stencil, Color.CornflowerBlue, 1000f, 0);
+                _graphics.Clear(ClearOptions.Target | ClearOptions.DepthBuffer | ClearOptions.Stencil, Color.Black, 1000f, 0);
                 _spriteBatch.Begin();
                 _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();

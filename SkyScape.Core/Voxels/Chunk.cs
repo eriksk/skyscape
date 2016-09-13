@@ -27,6 +27,7 @@ namespace SkyScape.Core.Voxels
         }
 
         public bool Dirty => _dirty;
+        public int[] Data => _data;
 
         public int X => _x;
         public int Y => _y;
@@ -60,7 +61,34 @@ namespace SkyScape.Core.Voxels
 
             _isCleaning = true;
 
-            ThreadPool.QueueUserWorkItem((f) =>
+            if (World.UseMultiThreading)
+            {
+                ThreadPool.QueueUserWorkItem((f) =>
+                {
+                    var meshData = ChunkMeshGenerator.GenerateMesh(world, this);
+                    if (meshData.Vertices.Count > 0)
+                    {
+                        var newMesh = new Mesh(graphics, meshData);
+
+                        // swap references
+                        var oldMesh = _mesh;
+                        _mesh = newMesh;
+
+                        if (oldMesh != null)
+                            oldMesh.Dispose();
+                    }
+                    else
+                    {
+                        // No verts, so just destroy it
+                        if (_mesh != null)
+                            _mesh.Dispose();
+                        _mesh = null;
+                    }
+                    _isCleaning = false;
+                    _dirty = false;
+                }, 0);
+            }
+            else
             {
                 var meshData = ChunkMeshGenerator.GenerateMesh(world, this);
                 if (meshData.Vertices.Count > 0)
@@ -83,11 +111,8 @@ namespace SkyScape.Core.Voxels
                 }
                 _isCleaning = false;
                 _dirty = false;
-            }, 0);
-            //new Thread(() =>
-            //{
-            //}).Start();
 
+            }
 
         }
 
@@ -95,6 +120,15 @@ namespace SkyScape.Core.Voxels
         {
             if (_mesh == null) return;
             _mesh.Render(graphics, effect);
+        }
+
+        public void Clear()
+        {
+            if (_mesh != null)
+            {
+                _mesh.Dispose();
+                _mesh = null;
+            }
         }
     }
 }

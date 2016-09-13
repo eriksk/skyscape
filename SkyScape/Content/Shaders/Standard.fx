@@ -16,6 +16,7 @@ float _AmbientIntensity;
 float3 _DiffuseLightDirection = float3(1, 0, 0);
 float4 _DiffuseColor = float4(1, 1, 1, 1);
 float _DiffuseIntensity = 1.0;
+float _Alpha = 1.0;
 
 float _FarClip;
 
@@ -64,7 +65,7 @@ PS_OUTPUT MainPS(VertexShaderOutput input) : COLOR
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
 
-	output.Color = float4(saturate(input.Color + _AmbientColor * _AmbientIntensity).rgb, 1.0);
+	output.Color = float4(saturate(input.Color + _AmbientColor * _AmbientIntensity).rgb, _Alpha);
 	output.Depth = float4(input.Depth, input.Depth, input.Depth, 1.0);
 
 	return output;
