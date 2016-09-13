@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyScape", "SkyScape\SkyScape.csproj", "{AC71DD03-0A12-471C-A89A-3A989B31E55C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyScape.Core", "SkyScape.Core\SkyScape.Core.csproj", "{92959D03-84E5-447C-AD92-8A70B8C32B13}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AC71DD03-0A12-471C-A89A-3A989B31E55C}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{AC71DD03-0A12-471C-A89A-3A989B31E55C}.Debug|x86.ActiveCfg = Debug|x86
+		{AC71DD03-0A12-471C-A89A-3A989B31E55C}.Debug|x86.Build.0 = Debug|x86
+		{AC71DD03-0A12-471C-A89A-3A989B31E55C}.Release|Any CPU.ActiveCfg = Release|x86
+		{AC71DD03-0A12-471C-A89A-3A989B31E55C}.Release|x86.ActiveCfg = Release|x86
+		{AC71DD03-0A12-471C-A89A-3A989B31E55C}.Release|x86.Build.0 = Release|x86
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Debug|x86.Build.0 = Debug|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Release|x86.ActiveCfg = Release|Any CPU
+		{92959D03-84E5-447C-AD92-8A70B8C32B13}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
