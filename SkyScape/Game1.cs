@@ -22,8 +22,9 @@ namespace SkyScape
 
         protected override void Initialize()
         {
-            _game = new SkyScapeGame(GraphicsDevice, Content, graphics);
+            _game = new SkyScapeGame(this, GraphicsDevice, Content, graphics);
             _game.Initialize();
+            
 
 
             base.Initialize();

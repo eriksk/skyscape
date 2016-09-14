@@ -6,6 +6,7 @@ using SkyScape.Core.Cameras;
 using SkyScape.Core.Components;
 using SkyScape.Core.Effects;
 using SkyScape.Core.Meshes;
+using SkyScape.Core.Metrics;
 using SkyScape.Core.Noise;
 using SkyScape.Core.Shapes;
 using SkyScape.Core.Voxels;
@@ -26,6 +27,7 @@ namespace SkyScape.Core
         private GraphicsDevice _graphics;
         private ContentManager _content;
         private SpriteBatch _spriteBatch;
+        private Game _game;
 
         StandardEffect _effect;
 
@@ -39,12 +41,17 @@ namespace SkyScape.Core
         private RenderTarget2D _depthTarget;
         private RenderTarget2D _ssaoTarget;
         private bool _ambientOcclusion = false;
+        private RasterizerState _rasterizerState;
+
+        private SpriteFont _debugFont;
+        private FrameCounter _fpsCounter;
 
 
-        public SkyScapeGame(GraphicsDevice graphics, ContentManager content, GraphicsDeviceManager graphicsDeviceManager)
+        public SkyScapeGame(Game game, GraphicsDevice graphics, ContentManager content, GraphicsDeviceManager graphicsDeviceManager)
         {
             _graphics = graphics;
             _content = content;
+            _game = game;
             _graphicsDeviceManager = graphicsDeviceManager;
             _spriteBatch = new SpriteBatch(_graphics);
         }
@@ -53,15 +60,20 @@ namespace SkyScape.Core
         {
             _graphicsDeviceManager.PreferredBackBufferWidth = 1280;
             _graphicsDeviceManager.PreferredBackBufferHeight = 720;
-            _graphicsDeviceManager.SynchronizeWithVerticalRetrace = true;
+            _graphicsDeviceManager.SynchronizeWithVerticalRetrace = false;
+            _game.IsFixedTimeStep = true;
             _graphicsDeviceManager.ApplyChanges();
+
+            _rasterizerState = _graphics.RasterizerState;
+
+            _fpsCounter = new FrameCounter();
 
             ThreadPool.SetMaxThreads(4, 4);
         }
 
         public void Load()
         {
-
+            _debugFont = _content.Load<SpriteFont>(@"Fonts/debug");
             _depthEffect = _content.Load<Effect>(@"Shaders/Depth");
             _effect = new StandardEffect(_content.Load<Effect>(@"Shaders/Standard"));
 
@@ -120,19 +132,19 @@ namespace SkyScape.Core
             sw.Start();
 
             int seed = rand.Next(0, 1000000);
-            int worldSize = 64;
+            int worldSize = 512;
 
             var perlinTex = _content.Load<Texture2D>(@"Gfx/perlin_1");
             var pixels = TextureTo2DArray(perlinTex);
-            int offset = -worldSize / 2;
+            int offset = 0;
 
-            //for (int x = 0; x < pixels.GetLength(0) / 8; x++)
+            _world.Clear();
+
+            //for (int x = 0; x < pixels.GetLength(0) / 2; x++)
             //{
-            //    for (int z = 0; z < pixels.GetLength(1) / 8; z++)
+            //    for (int z = 0; z < pixels.GetLength(1) / 2; z++)
             //    {
             //        var mag = Math.Min(pixels[z, x].R / 2, 64);
-
-            //        //_world.Set(x + 32, mag + 32, z + 32, Voxel.Grass);
 
             //        for (int y = 0; y < mag; y++)
             //        {
@@ -143,22 +155,29 @@ namespace SkyScape.Core
             //    }
             //}
 
-            _world.Clear();
+            var voxels = new[]
+            {
+                Voxel.Water,
+                Voxel.Water,
+                Voxel.Grass,
+                Voxel.Grass,
+                Voxel.Stone,
+                Voxel.Stone,
+                Voxel.Snow
+            };
 
             for (int x = 0; x < worldSize; x++)
             {
                 for (int z = 0; z < worldSize; z++)
                 {
-                    var perlin = 1f + NoiseGenerator.Noise(x + seed, z + seed);
+                    var perlin = 0.5f + NoiseGenerator.Noise(x + seed, z + seed);
 
                     int height = (int)(perlin * worldSize * 0.2f);
                     for (int y = 0; y < height; y++)
                     {
-                        _world.Set(x + offset, y + offset, z + offset, Voxel.Grass);
+                        var voxel = voxels[(int)MathHelper.Lerp(0, voxels.Length, y / (float)worldSize) + 1];
+                        _world.Set(x + offset, y + offset, z + offset, voxel);
                     }
-                    // stair
-                    //_world.Set(x, worldSize - z, z, Voxel.Grass);
-
                 }
             }
 
@@ -169,19 +188,24 @@ namespace SkyScape.Core
             //}
 
             //_world.Set(0, 0, 0, Voxel.Rock);
-            //for (int x = 0; x < worldSize; x++)
-            //{
-            //    for (int z = 0; z < worldSize; z++)
-            //    {
-            //        for (int y = 0; y < worldSize; y++)
-            //        {
-            //            _world.Set(x, y, z, Voxel.Rock);
-            //        }
-            //    }
-            //}
+
+            //Box(new VoxelPosition(0, 0, 0), 16, Voxel.Rock);
+            //Box(new VoxelPosition(32, 0, 0), 16, Voxel.Grass);
+            //Box(new VoxelPosition(0, 32, 0), 16, Voxel.Gold);
+            //Box(new VoxelPosition(-32, -32, -32), 16, Voxel.Dirt);
+            //Box(new VoxelPosition(-16, -16, -16), 16, Voxel.Water);
+
             sw.Stop();
 
             Console.WriteLine($"Set world: {sw.ElapsedMilliseconds} ms");
+        }
+
+        private void Box(VoxelPosition origin, int size, int value)
+        {
+            for (int x = origin.X; x < origin.X + size; x++)
+                for (int y = origin.Y; y < origin.Y + size; y++)
+                    for (int z = origin.Z; z < origin.Z + size; z++)
+                        _world.Set(x, y, z, value);
         }
 
         KeyboardState _oldKeys;
@@ -191,6 +215,11 @@ namespace SkyScape.Core
             var dt = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             var t = (float)gameTime.TotalGameTime.TotalMilliseconds;
 
+            _fpsCounter.Update(dt * 0.001f);
+            _game.Window.Title = "FPS: " + (int)(_fpsCounter.AverageFramesPerSecond + 1);
+
+
+            _world.Update(dt);
             _camController.Update(dt);
 
             var keyboard = Keyboard.GetState();
@@ -201,7 +230,7 @@ namespace SkyScape.Core
             }
 
             float radius = 0.0001f;
-            float area = 0.001f;
+            float area = 0.0001f;
             float fallOff = 0.000001f;
             float _base = 0.0001f;
             float blur = 0.01f;
@@ -267,15 +296,31 @@ namespace SkyScape.Core
 
         }
 
+        private void DrawLine(Vector3 from, Vector3 to, Color color)
+        {
+            _graphics.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, new VertexPositionColor[]
+            {
+                new VertexPositionColor(from, color),
+                new VertexPositionColor(to, color),
+            }, 0, 1);
+
+        }
+
         public void Draw(GameTime gameTime)
         {
             if (_ambientOcclusion)
             {
                 _graphics.SetRenderTargets(_mainTarget, _depthTarget);
+                _graphics.RasterizerState = _rasterizerState;
             }
             else
             {
                 _graphics.SetRenderTargets(_mainTarget);
+                _graphics.RasterizerState = new RasterizerState()
+                {
+                    FillMode = FillMode.WireFrame,
+                    CullMode = CullMode.None
+                };
             }
 
             _graphics.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
@@ -288,17 +333,15 @@ namespace SkyScape.Core
 
             _world.Render(_graphics, _cam, _effect);
 
-            //_effect.World = Matrix.CreateTranslation(0, 0, 0);
-            //_effect.CurrentTechnique.Passes[0].Apply();
-            //_graphics.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.LineList, new VertexPositionColor[]
-            //{
-            //    new VertexPositionColor(Vector3.Zero, Color.Blue),
-            //    new VertexPositionColor(Vector3.Forward * 500, Color.Blue),
-            //    new VertexPositionColor(Vector3.Zero, Color.Green),
-            //    new VertexPositionColor(Vector3.Right * 500, Color.Green),
-            //    new VertexPositionColor(Vector3.Zero, Color.Red),
-            //    new VertexPositionColor(Vector3.Up * 500, Color.Red),
-            //}, 0, 3);
+            // debug lines
+            {
+                _effect.ApplyForModel(Matrix.CreateTranslation(0, 0, 0));
+                _effect.CurrentTechnique.Passes[0].Apply();
+
+                DrawLine(Vector3.Zero, Vector3.Forward * 500, Color.Blue);
+                DrawLine(Vector3.Zero, Vector3.Right * 500, Color.Green);
+                DrawLine(Vector3.Zero, Vector3.Up * 500, Color.Red);
+            }
 
 
             if (_ambientOcclusion)
@@ -330,8 +373,23 @@ namespace SkyScape.Core
                 _spriteBatch.End();
             }
 
+            DrawUi();
 
+        }
 
+        private void DrawUi()
+        {
+            _spriteBatch.Begin();
+            _spriteBatch.DrawString(_debugFont, "P: " + _cam.Transform.Position.ToString(), new Vector2(16, 16), Color.LightGreen);
+            _spriteBatch.DrawString(_debugFont, "Chunk P: " + _world.GetChunkPosition(_cam.Transform.Position).ToString(), new Vector2(16, 32), Color.LightGreen);
+            _spriteBatch.DrawString(_debugFont, "Voxel P: " + _world.GetVoxelPosition(_cam.Transform.Position).ToString(), new Vector2(16, 32 + 16), Color.LightGreen);
+            _spriteBatch.DrawString(_debugFont, "Mask: " + _world.GetMask(_world.GetVoxelPosition(_cam.Transform.Position)).ToString(), new Vector2(16, 32+ 32), Color.LightGreen);
+
+            _spriteBatch.DrawString(_debugFont, "Chunk Q: " + _world.Batcher.JobsInQueue, new Vector2(16, 32 + 32 + 32), Color.LightGreen);
+            _spriteBatch.DrawString(_debugFont, "Chunk gen: " + _world.Batcher.ActiveJobs, new Vector2(16, 32 + 32 + 32 + 16), Color.LightGreen);
+            _spriteBatch.DrawString(_debugFont, "Chunk Q-dt: " + _world.Batcher.JobsAboutToBeConsumed, new Vector2(16, 32 + 32 + 32 + 32), Color.LightGreen);
+
+            _spriteBatch.End();
         }
     }
 

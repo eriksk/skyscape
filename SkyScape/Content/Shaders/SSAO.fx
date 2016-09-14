@@ -81,9 +81,9 @@ float4 main(float4 pos : SV_POSITION, float4 color : COLOR0, float2 uv : TEXCOOR
 
 	float ao = 1.0 - total_strength * occlusion * (1.0 / samples);
 
-	float final = 1.0 - saturate(ao + base);
+	float final = (1.0 - saturate(ao + base));
 
-	return float4(final, final, final, 1.0);
+	return float4(final, final, final, depth);
 }
 
 

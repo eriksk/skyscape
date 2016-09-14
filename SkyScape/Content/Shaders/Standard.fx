@@ -49,7 +49,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 
 	float3 normal = mul(input.Normal, _WorldInverseTranspose);
 
-	float4 diffuseLightIntensity = dot(normal, _DiffuseLightDirection);
+	float4 diffuseLightIntensity = dot(normal, -_DiffuseLightDirection);
 
 	output.Color = saturate(input.Color + _DiffuseColor * _DiffuseIntensity * diffuseLightIntensity);
 //	output.Color = input.Color + saturate(_DiffuseIntensity * _DiffuseColor * diffuseLightIntensity); // input.Color + (_DiffuseIntensity * _DiffuseColor * diffuseLightIntensity);

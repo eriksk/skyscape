@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\Fonts\debug.spritefont" />
     <None Include="Content\Shaders\SSAO.fx" />
     <EmbeddedResource Include="Icon.ico" />
     <None Include="Content\Shaders\Depth.fx" />

@@ -9,6 +9,23 @@ namespace SkyScape.Core.UnitTests.Voxels
     public class WorldTests
     {
         [TestMethod]
+        public void VoxelMask_IsValidFlags()
+        {
+            Assert.AreEqual("0", Convert.ToString((int)(VoxelMask.None), 2));
+            Assert.AreEqual("1", Convert.ToString((int)(VoxelMask.Right), 2));
+            Assert.AreEqual("10", Convert.ToString((int)(VoxelMask.Left), 2));
+            Assert.AreEqual("100", Convert.ToString((int)(VoxelMask.Up), 2));
+            Assert.AreEqual("1000", Convert.ToString((int)(VoxelMask.Down), 2));
+            Assert.AreEqual("10000", Convert.ToString((int)(VoxelMask.Forward), 2));
+            Assert.AreEqual("100000", Convert.ToString((int)(VoxelMask.Back), 2));
+            Assert.AreEqual("111111", Convert.ToString((int)(VoxelMask.All), 2));
+
+
+            Assert.AreEqual("11", Convert.ToString((int)(VoxelMask.Left | VoxelMask.Right), 2));
+
+        }
+
+        [TestMethod]
         public void WorldToLocal_PositiveNumber_DifferentChunks()
         {
             World.ChunkSize = 16;
@@ -161,6 +178,32 @@ namespace SkyScape.Core.UnitTests.Voxels
             world.Set(-32, -32, -32, 1);
             Assert.AreEqual(1, world.Get(-32, -32, -32));
         }
+
+
+        [TestMethod]
+        public void WHAT_WHEN_THEN_derpderp()
+        {
+            World.ChunkSize = 32;
+            var world = new World();
+
+            world.Set(-32, -32, -32, 1);
+            Assert.AreEqual(1, world.Get(-32, -32, -32));
+        }
+
+
+
+        [TestMethod]
+        public void Goldstuff()
+        {
+            var world = new World();
+            Box(world, new VoxelPosition(0, 32, 0), 16, Voxel.Gold);
+
+            var mask = world.GetMask(new VoxelPosition(2, 48, -3));
+
+            Assert.AreEqual(VoxelMask.Up, mask);
+        }
+
+
         [TestMethod]
         public void WHAT_WHEN_THEN__2()
         {
@@ -186,13 +229,21 @@ namespace SkyScape.Core.UnitTests.Voxels
             var chunkPosition = world.GetChunkPositionFromWorldPosition(new VoxelPosition(3, 16, -17));
 
             var chunk = world.GetOrCreateChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
-            Assert.AreEqual(1, chunk.Data.Count(x => x == 1));
+            //Assert.AreEqual(1, chunk.Data.Count(x => x == 1));
         }
 
         private void TestSetVoxel(World world, int x, int y, int z, int value)
         {
             world.Set(x, y, z, value);
             Assert.AreEqual(value, world.Get(x, y, z));
+        }
+
+        private void Box(World world, VoxelPosition origin, int size, int value)
+        {
+            for (int x = origin.X; x < origin.X + size; x++)
+                for (int y = origin.Y; y < origin.Y + size; y++)
+                    for (int z = origin.Z; z < origin.Z + size; z++)
+                        world.Set(x, y, z, value);
         }
     }
 }

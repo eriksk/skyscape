@@ -62,12 +62,14 @@
     <Compile Include="Extensions\VectorExtensions.cs" />
     <Compile Include="Meshes\Mesh.cs" />
     <Compile Include="Meshes\MeshData.cs" />
+    <Compile Include="Metrics\FrameCounter.cs" />
     <Compile Include="Noise\NoiseGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Shapes\ShapeFactory.cs" />
     <Compile Include="SkyScapeGame.cs" />
     <Compile Include="Voxels\Chunk.cs" />
     <Compile Include="Voxels\Meshes\ChunkMeshGenerator.cs" />
+    <Compile Include="Voxels\Threading\ChunkGenerationBatcher.cs" />
     <Compile Include="Voxels\Voxel.cs" />
     <Compile Include="Voxels\World.cs" />
   </ItemGroup>

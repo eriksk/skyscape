@@ -25,9 +25,9 @@ namespace SkyScape.Core.Voxels.Meshes
 
             for (int x = 0; x < World.ChunkSize; x++)
             {
-                for (int y = 0; y < World.ChunkSize; y++)
+                for (int z = 0; z < World.ChunkSize; z++)
                 {
-                    for (int z = 0; z < World.ChunkSize; z++)
+                    for (int y = 0; y < World.ChunkSize; y++)
                     {
                         var block = chunk.Get(x, y, z);
 
@@ -37,33 +37,8 @@ namespace SkyScape.Core.Voxels.Meshes
                                 break;
                             default:
 
-                                var position = new VoxelPosition(chunk.X + x, chunk.Y + y, chunk.Z + z);
-                                var empty = Voxel.Empty;
-
-                                VoxelMask mask = world.GetMask(position);
-                                
-
-                                // should we add a block? 
-                                if (mask == VoxelMask.None) // no sides are empty
-                                {
-                                    //indexOffset += AddBlock(data, indexOffset, x, y, z, Color.Magenta, VoxelMask.All);
-                                    //SkippedBlocks++;
-                                }
-                                //else if(mask == VoxelMask.All) // all sides are empty
-                                //{
-
-                                //    indexOffset += AddBlock(data, indexOffset, x, y, z, Voxel.Types[block].Color, mask);
-                                //    //indexOffset += AddBlock(data, indexOffset, x, y, z, Color.Orange, mask);
-                                //}
-                                else if (mask != VoxelMask.All)
-                                {
-                                    
-                                }
-                                else
-                                {
-
-                                    indexOffset += AddBlock(data, indexOffset, x, y, z, Voxel.Types[block].Color, mask);
-                                }
+                                VoxelMask mask = world.GetMask(new VoxelPosition((chunk.X * World.ChunkSize) + x, (chunk.Y * World.ChunkSize) + y, (chunk.Z * World.ChunkSize) + z));
+                                indexOffset += AddBlock(data, indexOffset, x, y, z, Voxel.Types[block].Color, mask);
                                 break;
                         }
                     }

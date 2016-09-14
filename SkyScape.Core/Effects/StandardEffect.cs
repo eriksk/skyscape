@@ -15,7 +15,7 @@ namespace SkyScape.Core.Effects
         {
         }
 
-        public Matrix World { get; set; } = Matrix.Identity;
+        public Matrix World { get; private set; } = Matrix.Identity;
         public Matrix View { get; set; } = Matrix.Identity;
         public Matrix Projection { get; set; } = Matrix.Identity;
 
@@ -29,6 +29,12 @@ namespace SkyScape.Core.Effects
         public float Alpha { get; set; } = 1f;
 
         public float FarClip { get; set; } = 100f;
+
+        public void ApplyForModel(Matrix world)
+        {
+            World = world;
+            OnApply();
+        }
 
         protected override bool OnApply()
         {

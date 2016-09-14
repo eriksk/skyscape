@@ -40,7 +40,7 @@ namespace SkyScape.Core.Meshes
             foreach (var pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                graphics.DrawIndexedPrimitives(_primitiveType, 0, 0, _primitiveCount);
+                graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, _primitiveCount);
             }
         }
 

@@ -62,8 +62,8 @@ namespace SkyScape.Core.Cameras
 
             _camera.Transform.Position += transformedDirection * MoveSpeed * moveMultiplier * 0.01f * dt;
 
-            _yaw += horizontal * MouseSpeed * 0.0001f * dt;
-            _pitch += vertical * MouseSpeed * 0.0001f * dt;
+            _yaw += horizontal * MouseSpeed * 0.0005f * dt;
+            _pitch += vertical * MouseSpeed * 0.0005f * dt;
 
             _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 * 0.99f, MathHelper.PiOver2 * 0.99f);
 

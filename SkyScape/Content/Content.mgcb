@@ -55,3 +55,9 @@
 /processorParam:TextureFormat=Color
 /build:Gfx/perlin_1.png
 
+#begin Fonts/debug.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:TextureFormat=Compressed
+/build:Fonts/debug.spritefont
+

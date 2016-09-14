@@ -184,22 +184,20 @@ namespace SkyScape.Core.Shapes
                 case CubeFace.Front:
                     return new[]
                     {
-                        // TODO: Front and bck seems to be wrong, probably because the original was -1 back and 1 front and monogame is the other way around
-                        // Back
-                        new Vector3(-0.5f, -0.5f, -0.5f),
-                        new Vector3(-0.5f,  0.5f, -0.5f),
-                        new Vector3(0.5f,  0.5f, -0.5f),
-                        new Vector3(0.5f, -0.5f, -0.5f)
-                    };
-                case CubeFace.Back:
-                    return new[]
-                    {
-                        // TODO: Front and bck seems to be wrong, probably because the original was -1 back and 1 front and monogame is the other way around
                         // Front
                         new Vector3(-0.5f, -0.5f,  0.5f),
                         new Vector3(0.5f, -0.5f,  0.5f),
                         new Vector3(0.5f,  0.5f,  0.5f),
                         new Vector3(-0.5f,  0.5f,  0.5f),
+                    };
+                case CubeFace.Back:
+                    return new[]
+                    {
+                        // Back
+                        new Vector3(-0.5f, -0.5f, -0.5f),
+                        new Vector3(-0.5f,  0.5f, -0.5f),
+                        new Vector3(0.5f,  0.5f, -0.5f),
+                        new Vector3(0.5f, -0.5f, -0.5f)
                     };
                 default:
                     throw new Exception("Invalid face");

@@ -42,7 +42,7 @@ namespace SkyScape.Core.Voxels
             new VoxelType(Sand, Color.LightYellow),
             new VoxelType(Snow, Color.White),
             new VoxelType(Gold, Color.Orange),
-            new VoxelType(Water, Color.LightBlue)
+            new VoxelType(Water, Color.Blue)
         };
 
     }
@@ -81,10 +81,15 @@ namespace SkyScape.Core.Voxels
         public override int GetHashCode()
         {
             int hash = 13;
-            hash = (hash * 7) + X;
-            hash = (hash * 7) + Y;
-            hash = (hash * 7) + Z;
+            hash = (hash * 7) + X.GetHashCode();
+            hash = (hash * 7) + Y.GetHashCode();
+            hash = (hash * 7) + Z.GetHashCode();
             return hash;
+        }
+
+        public override string ToString()
+        {
+            return $"(X:{X}, Y:{Y}, Z:{Z})";
         }
     }
 
