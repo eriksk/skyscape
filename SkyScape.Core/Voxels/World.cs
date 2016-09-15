@@ -12,17 +12,17 @@ namespace SkyScape.Core.Voxels
 {
     public class World
     {
-        public static int ChunkSize = (int)Math.Pow(2, Chunk.LogSize);
+        public static int ChunkSize = 32;
         public static bool UseMultiThreading = true;
         public static float ViewDistance = 1000;
 
-        private Dictionary<VoxelPosition, Chunk> _chunks;
+        private Dictionary<int, Chunk> _chunks;
 
         private ChunkGenerationBatcher _generationBatcher;
 
         public World()
         {
-            _chunks = new Dictionary<VoxelPosition, Chunk>();
+            _chunks = new Dictionary<int, Chunk>();
             _generationBatcher = new ChunkGenerationBatcher();
         }
 
@@ -72,21 +72,45 @@ namespace SkyScape.Core.Voxels
 
         public int Get(int worldX, int worldY, int worldZ)
         {
-            var chunkPosition = GetChunkPositionFromWorldPosition(new VoxelPosition(worldX, worldY, worldZ));
-            var chunk = GetChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
-            if (chunk == null) return Voxel.Empty;
-            var local = WorldToLocal(new VoxelPosition(worldX, worldY, worldZ), chunk);
+            // Inlined get chunk position
+            int chunkX = (worldX >> Chunk.LogSize);
+            int chunkY = (worldY >> Chunk.LogSize);
+            int chunkZ = (worldZ >> Chunk.LogSize);
 
-            return chunk.Get(local.X, local.Y, local.Z);
+            var chunkPosition = new VoxelPosition(chunkX, chunkY, chunkZ); 
+            var chunk = _chunks.ContainsKey(chunkPosition.GetHashCode()) ? _chunks[chunkPosition.GetHashCode()] : null;
+            if (chunk == null) return Voxel.Empty;
+
+            // Inline WorldToLocal
+            int localX = worldX & Chunk.Mask;
+            int localY = worldY & Chunk.Mask;
+            int localZ = worldZ & Chunk.Mask;
+
+            return chunk._data[localX, localY, localZ];
         }
 
         public void Set(int worldX, int worldY, int worldZ, int value)
         {
-            var chunkPosition = GetChunkPositionFromWorldPosition(new VoxelPosition(worldX, worldY, worldZ));
-            var chunk = GetOrCreateChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
-            var local = WorldToLocal(new VoxelPosition(worldX, worldY, worldZ), chunk);
+            // Inlined get chunk position
+            int chunkX = (worldX >> Chunk.LogSize);
+            int chunkY = (worldY >> Chunk.LogSize);
+            int chunkZ = (worldZ >> Chunk.LogSize);
 
-            chunk.Set(local.X, local.Y, local.Z, value);
+            var chunkPosition = new VoxelPosition(chunkX, chunkY, chunkZ); 
+
+            var chunk = _chunks.ContainsKey(chunkPosition.GetHashCode()) ? _chunks[chunkPosition.GetHashCode()] : null;
+            if (chunk == null)
+            {
+                chunk = new Chunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
+                _chunks.Add(chunkPosition.GetHashCode(), chunk);
+            }
+            
+            // Inline WorldToLocal
+            int localX = worldX & Chunk.Mask;
+            int localY = worldY & Chunk.Mask;
+            int localZ = worldZ & Chunk.Mask;
+
+            chunk._data[localX, localY, localZ] = value;
         }
 
         public VoxelPosition GetChunkPositionFromWorldPosition(VoxelPosition worldPosition)
@@ -105,22 +129,6 @@ namespace SkyScape.Core.Voxels
             int localZ = worldPosition.Z & Chunk.Mask;
 
             return new VoxelPosition(localX, localY, localZ);
-        }
-
-        public Chunk GetChunk(int chunkX, int chunkY, int chunkZ)
-        {
-            var chunkPosition = new VoxelPosition(chunkX, chunkY, chunkZ);
-            var chunk = _chunks.ContainsKey(chunkPosition) ? _chunks[chunkPosition] : null;
-            return chunk;
-        }
-        public Chunk GetOrCreateChunk(int chunkX, int chunkY, int chunkZ)
-        {
-            var chunkPosition = new VoxelPosition(chunkX, chunkY, chunkZ);
-            var chunk = _chunks.ContainsKey(chunkPosition) ? _chunks[chunkPosition] : null;
-            if (chunk != null) return chunk;
-            chunk = new Chunk(chunkX, chunkY, chunkZ);
-            _chunks.Add(chunkPosition, chunk);
-            return chunk;
         }
 
         public void Clean(GraphicsDevice graphics)
@@ -160,21 +168,21 @@ namespace SkyScape.Core.Voxels
         /// </summary>
         /// <param name="worldPosition"></param>
         /// <returns></returns>
-        public VoxelMask GetMask(VoxelPosition worldPosition)
+        public VoxelMask GetMask(int worldX, int worldY, int worldZ)
         {
             var mask = VoxelMask.None;
 
-            if(Get(worldPosition.X + 1, worldPosition.Y, worldPosition.Z) == Voxel.Empty)
+            if(Get(worldX + 1, worldY, worldZ) == Voxel.Empty)
                 mask |= VoxelMask.Right;
-            if (Get(worldPosition.X - 1, worldPosition.Y, worldPosition.Z) == Voxel.Empty)
+            if (Get(worldX - 1, worldY, worldZ) == Voxel.Empty)
                 mask |= VoxelMask.Left;
-            if (Get(worldPosition.X, worldPosition.Y + 1, worldPosition.Z) == Voxel.Empty)
+            if (Get(worldX, worldY + 1, worldZ) == Voxel.Empty)
                 mask |= VoxelMask.Up;
-            if (Get(worldPosition.X, worldPosition.Y - 1, worldPosition.Z) == Voxel.Empty)
+            if (Get(worldX, worldY - 1, worldZ) == Voxel.Empty)
                 mask |= VoxelMask.Down;
-            if (Get(worldPosition.X, worldPosition.Y, worldPosition.Z + 1) == Voxel.Empty)
+            if (Get(worldX, worldY, worldZ + 1) == Voxel.Empty)
                 mask |= VoxelMask.Forward;
-            if (Get(worldPosition.X, worldPosition.Y, worldPosition.Z - 1) == Voxel.Empty)
+            if (Get(worldX, worldY, worldZ - 1) == Voxel.Empty)
                 mask |= VoxelMask.Back;
 
             return mask;
@@ -185,7 +193,7 @@ namespace SkyScape.Core.Voxels
             _generationBatcher.Clear();
             foreach (var chunk in _chunks.Values)
                 chunk.Clear();
-            _chunks = new Dictionary<VoxelPosition, Chunk>();
+            _chunks = new Dictionary<int, Chunk>();
         }
     }
 }

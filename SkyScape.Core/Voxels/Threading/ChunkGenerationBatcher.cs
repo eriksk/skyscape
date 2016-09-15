@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -12,6 +13,9 @@ namespace SkyScape.Core.Voxels.Threading
     {
         public static int MaxConcurrent = 12;
         public static float ConsumeInterval = 100f; // TODO: by timespan?
+
+        public static bool PerformaceTracking = true;
+
         private float _currentConsumeTime = ConsumeInterval;
 
         private List<ChunkGenerationWork> _jobs;
@@ -76,6 +80,61 @@ namespace SkyScape.Core.Voxels.Threading
         }
     }
 
+    public class ChunkGeneratorPerformanceTracker
+    {
+        private static List<float> _generations = new List<float>();
+        private static object _lock = new object();
+
+        public static void Log(float duration)
+        {
+            lock (_lock)
+            {
+                _generations.Add(duration);
+            }
+        }
+
+        public static float Mean
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _generations.Sum() / (float)_generations.Count;
+                }
+            }
+        }
+        public static float Min
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _generations.Min();
+                }
+            }
+        }
+        public static float Max
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _generations.Max();
+                }
+            }
+        }
+        public static float Median
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _generations.Count > 2 ? _generations.OrderBy(x => x).ToArray()[_generations.Count / 2] : 0f;
+                }
+            }
+        }
+    }
+
     public class ChunkGenerationWork
     {
         public Chunk Chunk { get; }
@@ -99,7 +158,14 @@ namespace SkyScape.Core.Voxels.Threading
             {
                 try
                 {
+                    var stopwatch = new Stopwatch();
+                    stopwatch.Start();
                     _work(World);
+                    stopwatch.Stop();
+                    if (ChunkGenerationBatcher.PerformaceTracking)
+                    {
+                        ChunkGeneratorPerformanceTracker.Log(stopwatch.ElapsedMilliseconds);
+                    }
                 }
                 catch (ThreadAbortException ex)
                 {

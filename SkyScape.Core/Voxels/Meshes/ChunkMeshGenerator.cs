@@ -12,8 +12,6 @@ namespace SkyScape.Core.Voxels.Meshes
 {
     public class ChunkMeshGenerator
     {
-        public static int SkippedBlocks = 0;
-
         public static MeshData GenerateMesh(World world, Chunk chunk)
         {
             var data = new MeshData()
@@ -37,7 +35,7 @@ namespace SkyScape.Core.Voxels.Meshes
                                 break;
                             default:
 
-                                VoxelMask mask = world.GetMask(new VoxelPosition((chunk.X * World.ChunkSize) + x, (chunk.Y * World.ChunkSize) + y, (chunk.Z * World.ChunkSize) + z));
+                                VoxelMask mask = world.GetMask((chunk.X * World.ChunkSize) + x, (chunk.Y * World.ChunkSize) + y, (chunk.Z * World.ChunkSize) + z);
                                 indexOffset += AddBlock(data, indexOffset, x, y, z, Voxel.Types[block].Color, mask);
                                 break;
                         }
@@ -51,63 +49,68 @@ namespace SkyScape.Core.Voxels.Meshes
         private static int AddBlock(MeshData data, int indexOffset, int x, int y, int z, Color color, VoxelMask mask)
         {
             int faceCount = 0;
+            var offset = new Vector3(x, y, z);
+            var colors = new[]
+            {
+                color,color,color,color
+            };
 
             if (mask.HasFlag(VoxelMask.Left))
             {
-                data.Vertices.AddRange(ShapeFactory.CreateCubeFace(CubeFace.Left).Select(f => f + new Vector3(x, y, z)));
-                data.Normals.AddRange(ShapeFactory.CreateCubeNormals(CubeFace.Left));
-                data.Indices.AddRange(ShapeFactory.CreateCubeIndices(CubeFace.Left).Select(f => indexOffset + f));
-                data.Colors.AddRange(new Color[] { }.AddRepeat(color, 4));
+                ShapeFactory.CreateCubeFace(data.Vertices, CubeFace.Left, offset);
+                ShapeFactory.CreateCubeNormals(data.Normals, CubeFace.Left);
+                ShapeFactory.CreateCubeIndices(data.Indices, indexOffset);
+                data.Colors.AddRange(colors);
                 indexOffset += 4;
                 faceCount++;
             }
 
             if (mask.HasFlag(VoxelMask.Right))
             {
-                data.Vertices.AddRange(ShapeFactory.CreateCubeFace(CubeFace.Right).Select(f => f + new Vector3(x, y, z)));
-                data.Normals.AddRange(ShapeFactory.CreateCubeNormals(CubeFace.Right));
-                data.Indices.AddRange(ShapeFactory.CreateCubeIndices(CubeFace.Right).Select(f => indexOffset + f));
-                data.Colors.AddRange(new Color[] { }.AddRepeat(color, 4));
+                ShapeFactory.CreateCubeFace(data.Vertices, CubeFace.Right, offset);
+                ShapeFactory.CreateCubeNormals(data.Normals, CubeFace.Right);
+                ShapeFactory.CreateCubeIndices(data.Indices, indexOffset);
+                data.Colors.AddRange(colors);
                 indexOffset += 4;
                 faceCount++;
             }
 
             if (mask.HasFlag(VoxelMask.Up))
             {
-                data.Vertices.AddRange(ShapeFactory.CreateCubeFace(CubeFace.Top).Select(f => f + new Vector3(x, y, z)));
-                data.Normals.AddRange(ShapeFactory.CreateCubeNormals(CubeFace.Top));
-                data.Indices.AddRange(ShapeFactory.CreateCubeIndices(CubeFace.Top).Select(f => indexOffset + f));
-                data.Colors.AddRange(new Color[] { }.AddRepeat(color, 4));
+                ShapeFactory.CreateCubeFace(data.Vertices, CubeFace.Top, offset);
+                ShapeFactory.CreateCubeNormals(data.Normals, CubeFace.Top);
+                ShapeFactory.CreateCubeIndices(data.Indices, indexOffset);
+                data.Colors.AddRange(colors);
                 indexOffset += 4;
                 faceCount++;
             }
 
             if (mask.HasFlag(VoxelMask.Down))
             {
-                data.Vertices.AddRange(ShapeFactory.CreateCubeFace(CubeFace.Bottom).Select(f => f + new Vector3(x, y, z)));
-                data.Normals.AddRange(ShapeFactory.CreateCubeNormals(CubeFace.Bottom));
-                data.Indices.AddRange(ShapeFactory.CreateCubeIndices(CubeFace.Bottom).Select(f => indexOffset + f));
-                data.Colors.AddRange(new Color[] { }.AddRepeat(color, 4));
+                ShapeFactory.CreateCubeFace(data.Vertices, CubeFace.Bottom, offset);
+                ShapeFactory.CreateCubeNormals(data.Normals, CubeFace.Bottom);
+                ShapeFactory.CreateCubeIndices(data.Indices, indexOffset);
+                data.Colors.AddRange(colors);
                 indexOffset += 4;
                 faceCount++;
             }
 
             if (mask.HasFlag(VoxelMask.Forward))
             {
-                data.Vertices.AddRange(ShapeFactory.CreateCubeFace(CubeFace.Front).Select(f => f + new Vector3(x, y, z)));
-                data.Normals.AddRange(ShapeFactory.CreateCubeNormals(CubeFace.Front));
-                data.Indices.AddRange(ShapeFactory.CreateCubeIndices(CubeFace.Front).Select(f => indexOffset + f));
-                data.Colors.AddRange(new Color[] { }.AddRepeat(color, 4));
+                ShapeFactory.CreateCubeFace(data.Vertices, CubeFace.Front, offset);
+                ShapeFactory.CreateCubeNormals(data.Normals, CubeFace.Front);
+                ShapeFactory.CreateCubeIndices(data.Indices, indexOffset);
+                data.Colors.AddRange(colors);
                 indexOffset += 4;
                 faceCount++;
             }
 
             if (mask.HasFlag(VoxelMask.Back))
             {
-                data.Vertices.AddRange(ShapeFactory.CreateCubeFace(CubeFace.Back).Select(f => f + new Vector3(x, y, z)));
-                data.Normals.AddRange(ShapeFactory.CreateCubeNormals(CubeFace.Back));
-                data.Indices.AddRange(ShapeFactory.CreateCubeIndices(CubeFace.Back).Select(f => indexOffset + f));
-                data.Colors.AddRange(new Color[] { }.AddRepeat(color, 4));
+                ShapeFactory.CreateCubeFace(data.Vertices, CubeFace.Back, offset);
+                ShapeFactory.CreateCubeNormals(data.Normals, CubeFace.Back);
+                ShapeFactory.CreateCubeIndices(data.Indices, indexOffset);
+                data.Colors.AddRange(colors);
                 indexOffset += 4;
                 faceCount++;
             }

@@ -100,105 +100,118 @@ namespace SkyScape.Core.Shapes
             }.Reverse().ToArray();
         }
 
-        public static int[] CreateCubeIndices(CubeFace face)
+        public static void CreateCubeIndices(List<int> indices, int offset)
         {
-            return new int[]
+            indices.AddRange(new int[]
             {
-               3,  2,  0,      2,  1,  0
-            };
+                offset + 3,
+                offset + 2,
+                offset + 0,
+                offset + 2,
+                offset + 1,
+                offset + 0
+            });
         }
 
-        public static Vector3[] CreateCubeNormals(CubeFace face)
+        private static readonly Vector3[] NormalsLeft = new Vector3[] { }.AddRepeat(Vector3.Left, 4).ToArray();
+        private static readonly Vector3[] NormalsRight = new Vector3[] { }.AddRepeat(Vector3.Right, 4).ToArray();
+        private static readonly Vector3[] NormalsUp = new Vector3[] { }.AddRepeat(Vector3.Up, 4).ToArray();
+        private static readonly Vector3[] NormalsDown = new Vector3[] { }.AddRepeat(Vector3.Down, 4).ToArray();
+        private static readonly Vector3[] NormalsForward = new Vector3[] { }.AddRepeat(Vector3.Forward, 4).ToArray();
+        private static readonly Vector3[] NormalsBack = new Vector3[] { }.AddRepeat(Vector3.Backward, 4).ToArray();
+
+        public static void CreateCubeNormals(List<Vector3> normals, CubeFace face)
         {
             switch (face)
             {
                 case CubeFace.Left:
-                    return new Vector3[] { }
-                     .AddRepeat(Vector3.Left, 4)
-                     .ToArray();
+                    normals.AddRange(NormalsLeft);
+                    break;
                 case CubeFace.Right:
-                    return new Vector3[] { }
-                     .AddRepeat(Vector3.Right, 4)
-                     .ToArray();
+                    normals.AddRange(NormalsRight);
+                    break;
                 case CubeFace.Top:
-                    return new Vector3[] { }
-                     .AddRepeat(Vector3.Up, 4)
-                     .ToArray();
+                    normals.AddRange(NormalsUp);
+                    break;
                 case CubeFace.Bottom:
-                    return new Vector3[] { }
-                     .AddRepeat(Vector3.Down, 4)
-                     .ToArray();
+                    normals.AddRange(NormalsDown);
+                    break;
                 case CubeFace.Front:
-                    return new Vector3[] { }
-                     .AddRepeat(Vector3.Forward, 4)
-                     .ToArray();
+                    normals.AddRange(NormalsForward);
+                    break;
                 case CubeFace.Back:
-                    return new Vector3[] { }
-                     .AddRepeat(Vector3.Backward, 4)
-                     .ToArray();
+                    normals.AddRange(NormalsBack);
+                    break;
+
                 default:
                     throw new Exception("Invalid face");
             }
         }
 
-        public static Vector3[] CreateCubeFace(CubeFace face)
+        public static void CreateCubeFace(List<Vector3> vertices, CubeFace face, Vector3 offset = new Vector3())
         {
             switch (face)
             {
                 case CubeFace.Left:
-                    return new[] 
+                    vertices.AddRange(new[] 
                     {
                         // Left
-                        new Vector3(-0.5f, -0.5f, -0.5f),
-                        new Vector3(-0.5f, -0.5f,  0.5f),
-                        new Vector3(-0.5f,  0.5f,  0.5f),
-                        new Vector3(-0.5f,  0.5f, -0.5f)
-                    };
+                        new Vector3(-0.5f, -0.5f, -0.5f) + offset,
+                        new Vector3(-0.5f, -0.5f,  0.5f) + offset,
+                        new Vector3(-0.5f,  0.5f,  0.5f) + offset,
+                        new Vector3(-0.5f,  0.5f, -0.5f) + offset
+                    });
+                    break;
                 case CubeFace.Right:
-                    return new[] 
+                    vertices.AddRange(new[]
                     { 
                         // Right
-                        new Vector3(0.5f, -0.5f, -0.5f),
-                        new Vector3(0.5f,  0.5f, -0.5f),
-                        new Vector3(0.5f,  0.5f,  0.5f),
-                        new Vector3(0.5f, -0.5f,  0.5f)
-                    };
+                        new Vector3(0.5f, -0.5f, -0.5f) + offset,
+                        new Vector3(0.5f,  0.5f, -0.5f) + offset,
+                        new Vector3(0.5f,  0.5f,  0.5f) + offset,
+                        new Vector3(0.5f, -0.5f,  0.5f) + offset
+                    });
+                    break;
                 case CubeFace.Top:
-                    return new[] 
+                    vertices.AddRange(new[]
                     {
                         // Top
-                        new Vector3(-0.5f,  0.5f, -0.5f),
-                        new Vector3(-0.5f,  0.5f,  0.5f),
-                        new Vector3(0.5f,  0.5f,  0.5f),
-                        new Vector3(0.5f,  0.5f, -0.5f)
-                    };
+                        new Vector3(-0.5f,  0.5f, -0.5f)+offset,
+                        new Vector3(-0.5f,  0.5f,  0.5f)+offset,
+                        new Vector3(0.5f,  0.5f,  0.5f)+offset,
+                        new Vector3(0.5f,  0.5f, -0.5f) +offset
+                    });
+                    break;
                 case CubeFace.Bottom:
-                    return new[] 
+                    vertices.AddRange(new[]
                     { 
                         // Bottom
-                        new Vector3(-0.5f, -0.5f, -0.5f),
-                        new Vector3(0.5f, -0.5f, -0.5f),
-                        new Vector3(0.5f, -0.5f,  0.5f),
-                        new Vector3(-0.5f, -0.5f,  0.5f)
-                    };
+                        new Vector3(-0.5f, -0.5f, -0.5f)+offset,
+                        new Vector3(0.5f, -0.5f, -0.5f)+offset,
+                        new Vector3(0.5f, -0.5f,  0.5f)+offset,
+                        new Vector3(-0.5f, -0.5f,  0.5f)+offset
+                    });
+                    break;
                 case CubeFace.Front:
-                    return new[]
+                    vertices.AddRange(new[]
                     {
                         // Front
-                        new Vector3(-0.5f, -0.5f,  0.5f),
-                        new Vector3(0.5f, -0.5f,  0.5f),
-                        new Vector3(0.5f,  0.5f,  0.5f),
-                        new Vector3(-0.5f,  0.5f,  0.5f),
-                    };
+                        new Vector3(-0.5f, -0.5f,  0.5f)+offset,
+                        new Vector3(0.5f, -0.5f,  0.5f)+offset,
+                        new Vector3(0.5f,  0.5f,  0.5f)+offset,
+                        new Vector3(-0.5f,  0.5f,  0.5f)+offset,
+                    });
+                    break;
                 case CubeFace.Back:
-                    return new[]
+                    vertices.AddRange(new[]
                     {
                         // Back
-                        new Vector3(-0.5f, -0.5f, -0.5f),
-                        new Vector3(-0.5f,  0.5f, -0.5f),
-                        new Vector3(0.5f,  0.5f, -0.5f),
-                        new Vector3(0.5f, -0.5f, -0.5f)
-                    };
+                        new Vector3(-0.5f, -0.5f, -0.5f)+offset,
+                        new Vector3(-0.5f,  0.5f, -0.5f)+offset,
+                        new Vector3(0.5f,  0.5f, -0.5f)+offset,
+                        new Vector3(0.5f, -0.5f, -0.5f)+offset
+                    });
+                    break;
                 default:
                     throw new Exception("Invalid face");
             }

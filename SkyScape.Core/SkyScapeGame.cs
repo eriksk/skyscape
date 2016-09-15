@@ -11,6 +11,7 @@ using SkyScape.Core.Noise;
 using SkyScape.Core.Shapes;
 using SkyScape.Core.Voxels;
 using SkyScape.Core.Voxels.Meshes;
+using SkyScape.Core.Voxels.Threading;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -100,14 +101,7 @@ namespace SkyScape.Core
             _camController = new FpsCameraController(_cam);
 
             Generate();
-
-            var sw = new Stopwatch();
-            sw.Start();
-
             _world.Clean(_graphics);
-
-            sw.Stop();
-            Console.WriteLine($"Generate meshes: {sw.ElapsedMilliseconds} ms, skipped {ChunkMeshGenerator.SkippedBlocks} blocks");
         }
 
         private Color[,] TextureTo2DArray(Texture2D texture)
@@ -131,7 +125,7 @@ namespace SkyScape.Core
             var sw = new Stopwatch();
             sw.Start();
 
-            int seed = rand.Next(0, 1000000);
+            int seed = 0;//rand.Next(0, 1000000);
             int worldSize = 512;
 
             var perlinTex = _content.Load<Texture2D>(@"Gfx/perlin_1");
@@ -158,8 +152,6 @@ namespace SkyScape.Core
             var voxels = new[]
             {
                 Voxel.Water,
-                Voxel.Water,
-                Voxel.Grass,
                 Voxel.Grass,
                 Voxel.Stone,
                 Voxel.Stone,
@@ -383,11 +375,18 @@ namespace SkyScape.Core
             _spriteBatch.DrawString(_debugFont, "P: " + _cam.Transform.Position.ToString(), new Vector2(16, 16), Color.LightGreen);
             _spriteBatch.DrawString(_debugFont, "Chunk P: " + _world.GetChunkPosition(_cam.Transform.Position).ToString(), new Vector2(16, 32), Color.LightGreen);
             _spriteBatch.DrawString(_debugFont, "Voxel P: " + _world.GetVoxelPosition(_cam.Transform.Position).ToString(), new Vector2(16, 32 + 16), Color.LightGreen);
-            _spriteBatch.DrawString(_debugFont, "Mask: " + _world.GetMask(_world.GetVoxelPosition(_cam.Transform.Position)).ToString(), new Vector2(16, 32+ 32), Color.LightGreen);
+            var camVoxelPosition = _world.GetVoxelPosition(_cam.Transform.Position);
+            _spriteBatch.DrawString(_debugFont, "Mask: " + _world.GetMask(camVoxelPosition.X, camVoxelPosition.Y, camVoxelPosition.Z).ToString(), new Vector2(16, 32+ 32), Color.LightGreen);
 
             _spriteBatch.DrawString(_debugFont, "Chunk Q: " + _world.Batcher.JobsInQueue, new Vector2(16, 32 + 32 + 32), Color.LightGreen);
             _spriteBatch.DrawString(_debugFont, "Chunk gen: " + _world.Batcher.ActiveJobs, new Vector2(16, 32 + 32 + 32 + 16), Color.LightGreen);
             _spriteBatch.DrawString(_debugFont, "Chunk Q-dt: " + _world.Batcher.JobsAboutToBeConsumed, new Vector2(16, 32 + 32 + 32 + 32), Color.LightGreen);
+
+
+            _spriteBatch.DrawString(_debugFont, "C Mean: " + ChunkGeneratorPerformanceTracker.Mean, new Vector2(16, 256), Color.Red);
+            _spriteBatch.DrawString(_debugFont, "C Min: " + ChunkGeneratorPerformanceTracker.Min, new Vector2(16, 256 + 16), Color.Red);
+            _spriteBatch.DrawString(_debugFont, "C Max: " + ChunkGeneratorPerformanceTracker.Max, new Vector2(16, 256 + 32), Color.Red);
+            _spriteBatch.DrawString(_debugFont, "C Median: " + ChunkGeneratorPerformanceTracker.Median, new Vector2(16, 256 + 32 + 16), Color.Red);
 
             _spriteBatch.End();
         }

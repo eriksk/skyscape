@@ -9,7 +9,7 @@ namespace SkyScape.Core.Voxels
 {
     public class Chunk
     {
-        private readonly int[,,] _data;
+        public readonly int[,,] _data;
         private bool _dirty;
         private readonly int _x;
         private readonly int _y;
@@ -17,16 +17,9 @@ namespace SkyScape.Core.Voxels
 
         private Mesh _mesh;
 
-        // https://www.blockstory.net/book/export/html/56
-
-        public static int LogSize = 6;
-
-        // This is the same as 1 * 2^LogSizeX = 2 ^ 5 = 32
-        public static int Size => 1 << LogSize;
-
-        // this is the same as 2^LogSizeX - 1 = 2^5 -1 = 31
-        // from the sorcery above, it can be used to calculate x % 32
-        public static int Mask => Size - 1;
+        public static readonly int LogSize = (int)Math.Log(World.ChunkSize, 2);
+        public static readonly int Size = 1 << LogSize;
+        public static readonly int Mask = Size - 1;
 
         public Chunk(int x, int y, int z)
         {
@@ -38,7 +31,6 @@ namespace SkyScape.Core.Voxels
         }
 
         public bool Dirty => _dirty;
-        public int[,,] Data => _data;
 
         public int X => _x;
         public int Y => _y;

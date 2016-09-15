@@ -71,7 +71,7 @@ namespace SkyScape.Core.UnitTests.Voxels
             world.Set(0, 0, -1, 1);
             world.Set(0, 0, 1, 1);
 
-            var mask = world.GetMask(new VoxelPosition(0, 0, 0));
+            var mask = world.GetMask(0, 0, 0);
 
             Assert.AreEqual(VoxelMask.None, mask);
         }
@@ -81,7 +81,7 @@ namespace SkyScape.Core.UnitTests.Voxels
         {
             var world = new World();
 
-            var mask = world.GetMask(new VoxelPosition(0, 0, 0));
+            var mask = world.GetMask(0, 0, 0);
 
             Assert.AreEqual(VoxelMask.All, mask);
         }
@@ -94,7 +94,7 @@ namespace SkyScape.Core.UnitTests.Voxels
             world.Set(-1, 0, 0, 1);
             world.Set(1, 0, 0, 1);
 
-            var mask = world.GetMask(new VoxelPosition(0, 0, 0));
+            var mask = world.GetMask(0, 0, 0);
 
             Assert.AreEqual(VoxelMask.Up | VoxelMask.Down | VoxelMask.Forward | VoxelMask.Back, mask);
         }
@@ -112,7 +112,7 @@ namespace SkyScape.Core.UnitTests.Voxels
                 SurroundBack(position, w);
             });
             
-            Assert.AreEqual(VoxelMask.Left | VoxelMask.Right, world.GetMask(position));
+            Assert.AreEqual(VoxelMask.Left | VoxelMask.Right, world.GetMask(position.X, position.Y, position.Z));
 
             position = new VoxelPosition(-1, -1, -1);
             world = SurroundTest(position, w =>
@@ -123,7 +123,7 @@ namespace SkyScape.Core.UnitTests.Voxels
                 SurroundBack(position, w);
             });
 
-            Assert.AreEqual(VoxelMask.Left | VoxelMask.Right, world.GetMask(position));
+            Assert.AreEqual(VoxelMask.Left | VoxelMask.Right, world.GetMask(position.X, position.Y, position.Z));
 
             position = new VoxelPosition(-134, -678, -19);
             world = SurroundTest(position, w =>
@@ -134,7 +134,7 @@ namespace SkyScape.Core.UnitTests.Voxels
                 SurroundBack(position, w);
             });
 
-            Assert.AreEqual(VoxelMask.Left | VoxelMask.Right, world.GetMask(position));
+            Assert.AreEqual(VoxelMask.Left | VoxelMask.Right, world.GetMask(position.X, position.Y, position.Z));
         }
 
         private World SurroundTest(VoxelPosition position, Action<World> surroundCallback)
@@ -198,7 +198,7 @@ namespace SkyScape.Core.UnitTests.Voxels
             var world = new World();
             Box(world, new VoxelPosition(0, 32, 0), 16, Voxel.Gold);
 
-            var mask = world.GetMask(new VoxelPosition(2, 48, -3));
+            var mask = world.GetMask(2, 48, -3);
 
             Assert.AreEqual(VoxelMask.Up, mask);
         }
@@ -228,7 +228,7 @@ namespace SkyScape.Core.UnitTests.Voxels
             world.Set(3, 16, -17, 1);
             var chunkPosition = world.GetChunkPositionFromWorldPosition(new VoxelPosition(3, 16, -17));
 
-            var chunk = world.GetOrCreateChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
+            //var chunk = world.GetOrCreateChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
             //Assert.AreEqual(1, chunk.Data.Count(x => x == 1));
         }
 
