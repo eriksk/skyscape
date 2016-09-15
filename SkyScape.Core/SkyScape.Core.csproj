@@ -72,6 +72,8 @@
     <Compile Include="Voxels\Threading\ChunkGenerationBatcher.cs" />
     <Compile Include="Voxels\Voxel.cs" />
     <Compile Include="Voxels\World.cs" />
+    <Compile Include="WorldGeneration\WorldGenerator.cs" />
+    <Compile Include="WorldGeneration\WorldTraverserGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

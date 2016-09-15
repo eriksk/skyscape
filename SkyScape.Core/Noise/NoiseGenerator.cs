@@ -6,39 +6,33 @@ using System.Threading.Tasks;
 
 namespace SkyScape.Core.Noise
 {
-    static class NoiseGenerator
+    public class NoiseGenerator
     {
-        public static int Seed { get; private set; }
+        public int Octaves { get; set; }
+        public double Amplitude { get; set; }
+        public double Persistence { get; set; }
+        public double Frequency { get; set; }
+        private int _seed;
 
-        public static int Octaves { get; set; }
-
-        public static double Amplitude { get; set; }
-
-        public static double Persistence { get; set; }
-
-        public static double Frequency { get; set; }
-
-        static NoiseGenerator()
+        public NoiseGenerator(Random random)
         {
-            Random r = new Random();
-            //LOOOL
-            NoiseGenerator.Seed = r.Next(Int32.MaxValue);
-            NoiseGenerator.Octaves = 8;
-            NoiseGenerator.Amplitude = 1;
-            NoiseGenerator.Frequency = 0.015;
-            NoiseGenerator.Persistence = 0.65;
+            _seed = random.Next(0, int.MaxValue);
+            Octaves = 8;
+            Amplitude = 1;
+            Frequency = 0.015;
+            Persistence = 0.65;
         }
 
-        public static double Noise(int x, int y)
+        public double Noise(int x, int y)
         {
             //returns -1 to 1
             double total = 0.0;
-            double freq = NoiseGenerator.Frequency, amp = NoiseGenerator.Amplitude;
-            for (int i = 0; i < NoiseGenerator.Octaves; ++i)
+            double freq = Frequency, amp = Amplitude;
+            for (int i = 0; i < Octaves; ++i)
             {
-                total = total + NoiseGenerator.Smooth(x * freq, y * freq) * amp;
+                total = total + Smooth(x * freq, y * freq) * amp;
                 freq *= 2;
-                amp *= NoiseGenerator.Persistence;
+                amp *= Persistence;
             }
             if (total < -2.4) total = -2.4;
             else if (total > 2.4) total = 2.4;
@@ -46,21 +40,21 @@ namespace SkyScape.Core.Noise
             return (total / 2.4);
         }
 
-        public static double NoiseGeneration(int x, int y)
+        public double NoiseGeneration(int x, int y)
         {
             int n = x + y * 57;
             n = (n << 13) ^ n;
 
-            return (1.0 - ((n * (n * n * 15731 + 789221) + NoiseGenerator.Seed) & 0x7fffffff) / 1073741824.0);
+            return (1.0 - ((n * (n * n * 15731 + 789221) + _seed) & 0x7fffffff) / 1073741824.0);
         }
 
-        private static double Interpolate(double x, double y, double a)
+        private double Interpolate(double x, double y, double a)
         {
             double value = (1 - Math.Cos(a * Math.PI)) * 0.5;
             return x * (1 - value) + y * value;
         }
 
-        private static double Smooth(double x, double y)
+        private double Smooth(double x, double y)
         {
             double n1 = NoiseGeneration((int)x, (int)y);
             double n2 = NoiseGeneration((int)x + 1, (int)y);

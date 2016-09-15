@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +13,8 @@ namespace SkyScape.Core.Voxels.Threading
     public class ChunkGenerationBatcher
     {
         public static int MaxConcurrent = 12;
-        public static float ConsumeInterval = 100f; // TODO: by timespan?
+        public static float ConsumeInterval = 60f; // TODO: by timespan?
+        public static int MaxToConsumeEachTime = 1;
 
         public static bool PerformaceTracking = true;
 
@@ -43,6 +45,13 @@ namespace SkyScape.Core.Voxels.Threading
             return _jobs.Any(x => x.Chunk == chunk);
         }
 
+        public void CancelWork(Chunk chunk)
+        {
+            foreach (var job in _jobs.Where(x => x.Chunk == chunk).ToArray())
+                job.Kill();
+            _jobs.RemoveAll(x => x.Chunk == chunk);
+        }
+
         public bool QueueWork(World world, Chunk chunk, Action<World> work, Action<GraphicsDevice> mainThreadWork)
         {
             if (HasWork(chunk)) return false;
@@ -70,12 +79,15 @@ namespace SkyScape.Core.Voxels.Threading
             }
         }
 
-        public void Consume(GraphicsDevice graphics)
+        public void Consume(GraphicsDevice graphics, Vector3 position)
         {
             if (_currentConsumeTime < ConsumeInterval) return;
             _currentConsumeTime = 0f;
 
-            foreach (var job in _jobs.Where(x => x.Started && x.Done && !x.Consumed))
+            foreach (var job in _jobs
+                .Where(x => x.Started && x.Done && !x.Consumed)
+                .OrderBy(x => Vector3.Distance(x.Chunk.Center, position))
+                .Take(MaxToConsumeEachTime).ToArray())
                 job.ConsumeOnMainThread(graphics);
         }
     }
@@ -99,7 +111,7 @@ namespace SkyScape.Core.Voxels.Threading
             {
                 lock (_lock)
                 {
-                    return _generations.Sum() / (float)_generations.Count;
+                    return _generations.Count > 0 ? _generations.Sum() / (float)_generations.Count : 0;
                 }
             }
         }
@@ -109,7 +121,7 @@ namespace SkyScape.Core.Voxels.Threading
             {
                 lock (_lock)
                 {
-                    return _generations.Min();
+                    return _generations.Count > 0 ? _generations.Min() : 0;
                 }
             }
         }
@@ -119,7 +131,7 @@ namespace SkyScape.Core.Voxels.Threading
             {
                 lock (_lock)
                 {
-                    return _generations.Max();
+                    return _generations.Count > 0 ? _generations.Max() : 0;
                 }
             }
         }

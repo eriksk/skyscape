@@ -26,6 +26,8 @@ namespace SkyScape.Core.Voxels
             _generationBatcher = new ChunkGenerationBatcher();
         }
 
+        public List<Chunk> GetAllChunks() => _chunks.Values.ToList();
+
         public ChunkGenerationBatcher Batcher => _generationBatcher;
 
         public void SetFromPosition(Vector3 worldPosition, int value)
@@ -61,6 +63,22 @@ namespace SkyScape.Core.Voxels
             return new VoxelPosition(chunkX, chunkY, chunkZ);
         }
 
+        public bool ChunkExist(VoxelPosition chunkPosition)
+        {
+            return _chunks.ContainsKey(chunkPosition.GetHashCode());
+        }
+
+        public Chunk GetOrCreateChunk(VoxelPosition chunkPosition)
+        {
+            var chunk = _chunks.ContainsKey(chunkPosition.GetHashCode()) ? _chunks[chunkPosition.GetHashCode()] : null;
+            if (chunk == null)
+            {
+                chunk = new Chunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z);
+                _chunks.Add(chunkPosition.GetHashCode(), chunk);
+            }
+            return chunk;
+        }
+
         public int Get(VoxelPosition worldPosition)
         {
             return Get(worldPosition.X, worldPosition.Y, worldPosition.Z);
@@ -68,6 +86,16 @@ namespace SkyScape.Core.Voxels
         public void Set(VoxelPosition worldPosition, int value)
         {
             Set(worldPosition.X, worldPosition.Y, worldPosition.Z, value);
+        }
+
+        public void RemoveChunk(VoxelPosition chunkPosition)
+        {
+            var chunk = _chunks.ContainsKey(chunkPosition.GetHashCode()) ? _chunks[chunkPosition.GetHashCode()] : null;
+            if (chunk == null) return;
+            _chunks.Remove(chunkPosition.GetHashCode());
+            _generationBatcher.CancelWork(chunk);
+            chunk.Clear();
+            chunk = null;
         }
 
         public int Get(int worldX, int worldY, int worldZ)
@@ -147,7 +175,7 @@ namespace SkyScape.Core.Voxels
 
         public void Render(GraphicsDevice graphics, Camera cam, StandardEffect effect)
         {
-            _generationBatcher.Consume(graphics);
+            _generationBatcher.Consume(graphics, cam.Transform.Position);
 
             foreach (var chunk in _chunks.Values)
             {

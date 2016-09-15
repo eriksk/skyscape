@@ -12,6 +12,7 @@ using SkyScape.Core.Shapes;
 using SkyScape.Core.Voxels;
 using SkyScape.Core.Voxels.Meshes;
 using SkyScape.Core.Voxels.Threading;
+using SkyScape.Core.WorldGeneration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,6 +36,8 @@ namespace SkyScape.Core
         private World _world;
         private Camera _cam;
         private FpsCameraController _camController;
+        private WorldTraverserGenerator _traverser;
+        private WorldGenerator _generator;
 
         private Effect _depthEffect;
         private ScreenSpaceAmbientOcclusion _ssao;
@@ -91,17 +94,18 @@ namespace SkyScape.Core
             _ssao = new ScreenSpaceAmbientOcclusion(_content.Load<Effect>(@"Shaders/SSAO"));
             _ssao.RandomTextureSampler = _content.Load<Texture2D>(@"Shaders/ssao_random_vectors");
             _ssao.DepthTexture = _depthTarget;
-
-            _world = new World();
-
+            
             _cam = new Camera(_graphicsDeviceManager.PreferredBackBufferWidth, _graphicsDeviceManager.PreferredBackBufferHeight);
             _cam.Transform.Position = new Vector3(32, 32, 32);
             _cam.FOV = 0.60f;
 
+            _world = new World();
+
             _camController = new FpsCameraController(_cam);
 
-            Generate();
-            _world.Clean(_graphics);
+            _generator = new WorldGenerator(0);
+            _traverser = new WorldTraverserGenerator(_world, _generator);
+            _traverser.Target = _cam.Transform;
         }
 
         private Color[,] TextureTo2DArray(Texture2D texture)
@@ -157,12 +161,15 @@ namespace SkyScape.Core
                 Voxel.Stone,
                 Voxel.Snow
             };
+            var noise = new NoiseGenerator(new Random(seed));
+            noise.Octaves = 2;
+            noise.Frequency = 0.1f;
 
             for (int x = 0; x < worldSize; x++)
             {
                 for (int z = 0; z < worldSize; z++)
                 {
-                    var perlin = 0.5f + NoiseGenerator.Noise(x + seed, z + seed);
+                    var perlin = 0.5f + noise.Noise(x + seed, z + seed);
 
                     int height = (int)(perlin * worldSize * 0.2f);
                     for (int y = 0; y < height; y++)
@@ -211,6 +218,7 @@ namespace SkyScape.Core
             _game.Window.Title = "FPS: " + (int)(_fpsCounter.AverageFramesPerSecond + 1);
 
 
+            _traverser.Update(dt);
             _world.Update(dt);
             _camController.Update(dt);
 
@@ -275,7 +283,7 @@ namespace SkyScape.Core
 
             if (keyboard.IsKeyDown(Keys.Enter))
             {
-                Generate();
+                //Generate();
                 Console.WriteLine($@"
                     Base: {_ssao.Base},
                     Falloff: {_ssao.Falloff},
