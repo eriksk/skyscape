@@ -13,13 +13,16 @@ namespace SkyScape.Core.WorldGeneration
         private int _seed;
         private Random _random;
 
-        private NoiseGenerator _baseNoise;
+        private INoise _baseNoise;
+        private int _baseNoiseSeed;
 
         public WorldGenerator(int seed)
         {
             _seed = seed;
             _random = new Random(seed);
-            _baseNoise = new NoiseGenerator(_random);
+            //_baseNoise = new NoiseGenerator(_random);
+            _baseNoise = new SimplexNoiseGenerator();
+            SimplexNoiseGenerator.Seed = _random.Next();
             //_baseNoise.Octaves = 8;
             //_baseNoise.Frequency = 0.015f;
         }
@@ -28,16 +31,18 @@ namespace SkyScape.Core.WorldGeneration
 
         public VoxelType Get(int x, int y, int z)
         {
-            // the perlin is really slow...
-            var perlin = 0.5f + _baseNoise.Noise(x, z);
-            int height = (int)(perlin * 32 * 1f);
 
-            if (y > height)
-                return Voxel.Types[Voxel.Empty];
-            if (y < 0)
+            var maxHeight = 64;
+            if (y > maxHeight)
                 return Voxel.Types[Voxel.Empty];
 
-            return Voxel.Types[Voxel.Grass];
+            var noise = _baseNoise.Noise((float)x, (float)y, (float)z, 0.05f);
+            
+
+            if(noise < 0f)
+                return Voxel.Types[Voxel.Empty];
+
+            return Voxel.Types[Voxel.Grass]; //Voxel.Types[_random.Next(1, Voxel.Types.Length)];
         }
     }
 }

@@ -34,15 +34,15 @@ namespace SkyScape.Core.Voxels
 
         public static readonly VoxelType[] Types = new[]
         {
-            new VoxelType(Empty, Color.Black),
-            new VoxelType(Rock, Color.DarkGray),
-            new VoxelType(Grass, Color.Green),
-            new VoxelType(Dirt, Color.LightGoldenrodYellow),
-            new VoxelType(Stone, Color.Gray),
-            new VoxelType(Sand, Color.LightYellow),
-            new VoxelType(Snow, Color.White),
-            new VoxelType(Gold, Color.Orange),
-            new VoxelType(Water, Color.Blue)
+            new VoxelType(Empty, Color.Black, -1, -1),
+            new VoxelType(Rock, Color.White, 8, 8),
+            new VoxelType(Grass, Color.Green, 0, 1),
+            new VoxelType(Dirt, Color.LightGoldenrodYellow, 2, 3),
+            new VoxelType(Stone, Color.Gray, 4, 4),
+            new VoxelType(Sand, Color.LightYellow, 6, 6),
+            new VoxelType(Snow, Color.White, 6, 7),
+            new VoxelType(Gold, Color.Orange, 9, 9),
+            new VoxelType(Water, Color.Blue, 9, 9)
         };
 
     }
@@ -99,11 +99,93 @@ namespace SkyScape.Core.Voxels
     {
         public int Id;
         public Color Color;
+        public int SideTextureIndex, TopTextureIndex;
 
-        public VoxelType(int id, Color color)
+        public VoxelType(int id, Color color, int sideTextureIndex, int topTextureIndex)
         {
             Id = id;
             Color = color;
+            SideTextureIndex = sideTextureIndex;
+            TopTextureIndex = topTextureIndex;
+        }
+
+        public Vector2[] GetTexCoords(VoxelMask side)
+        {
+            const int width = 256;
+            const int height = 256;
+            const int cellSize = width / 8;
+            const float coordSize = cellSize / (float)width;
+
+            int index = 0;
+            if(side.HasFlag(VoxelMask.Left) ||
+                side.HasFlag(VoxelMask.Right) ||
+                side.HasFlag(VoxelMask.Forward) ||
+                side.HasFlag(VoxelMask.Back) ||
+                side.HasFlag(VoxelMask.Down))
+            {
+                index = SideTextureIndex;
+            }
+            if (side.HasFlag(VoxelMask.Up))
+            {
+                index = TopTextureIndex;
+            }
+
+            int col = index % 8;
+            int row = index / 8;
+
+
+            if (side.HasFlag(VoxelMask.Left))
+            {
+                return new[]
+                {
+                    new Vector2((col + 1) * coordSize, (row + 1) * coordSize),
+                    new Vector2(col * coordSize, (row + 1) * coordSize),
+                    new Vector2(col * coordSize, row * coordSize),
+                    new Vector2((col + 1) * coordSize, row * coordSize),
+                };
+
+            }
+
+            if (side.HasFlag(VoxelMask.Right))
+            {
+                return new[]
+                {
+                    new Vector2(col * coordSize, (row + 1) * coordSize),
+                    new Vector2(col * coordSize, row * coordSize),
+                    new Vector2((col + 1) * coordSize, row * coordSize),
+                    new Vector2((col + 1) * coordSize, (row + 1) * coordSize),
+                };
+            }
+
+            if (side.HasFlag(VoxelMask.Back))
+            {
+                return new[]
+                {
+                    new Vector2(col * coordSize, (row + 1) * coordSize),
+                    new Vector2(col * coordSize, row * coordSize),
+                    new Vector2((col + 1) * coordSize, row * coordSize),
+                    new Vector2((col + 1) * coordSize, (row + 1) * coordSize)
+                };
+            }
+
+            if (side.HasFlag(VoxelMask.Forward))
+            {
+                return new[]
+                {
+                    new Vector2((col + 1) * coordSize, (row + 1) * coordSize),
+                    new Vector2(col * coordSize, (row + 1) * coordSize),
+                    new Vector2(col * coordSize, row * coordSize),
+                    new Vector2((col + 1) * coordSize, row * coordSize),
+                };
+            }
+
+            return new[]
+            {
+                new Vector2(col * coordSize, row * coordSize),
+                new Vector2((col + 1) * coordSize, row * coordSize),
+                new Vector2((col + 1) * coordSize, (row + 1) * coordSize),
+                new Vector2(col * coordSize, (row + 1) * coordSize)
+            };
         }
     }
 }

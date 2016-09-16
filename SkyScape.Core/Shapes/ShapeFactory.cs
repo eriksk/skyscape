@@ -113,12 +113,12 @@ namespace SkyScape.Core.Shapes
             });
         }
 
-        private static readonly Vector3[] NormalsLeft = new Vector3[] { }.AddRepeat(Vector3.Left, 4).ToArray();
-        private static readonly Vector3[] NormalsRight = new Vector3[] { }.AddRepeat(Vector3.Right, 4).ToArray();
-        private static readonly Vector3[] NormalsUp = new Vector3[] { }.AddRepeat(Vector3.Up, 4).ToArray();
-        private static readonly Vector3[] NormalsDown = new Vector3[] { }.AddRepeat(Vector3.Down, 4).ToArray();
-        private static readonly Vector3[] NormalsForward = new Vector3[] { }.AddRepeat(Vector3.Forward, 4).ToArray();
-        private static readonly Vector3[] NormalsBack = new Vector3[] { }.AddRepeat(Vector3.Backward, 4).ToArray();
+        public static readonly Vector3[] NormalsLeft = new Vector3[] { }.AddRepeat(Vector3.Left, 4).ToArray();
+        public static readonly Vector3[] NormalsRight = new Vector3[] { }.AddRepeat(Vector3.Right, 4).ToArray();
+        public static readonly Vector3[] NormalsUp = new Vector3[] { }.AddRepeat(Vector3.Up, 4).ToArray();
+        public static readonly Vector3[] NormalsDown = new Vector3[] { }.AddRepeat(Vector3.Down, 4).ToArray();
+        public static readonly Vector3[] NormalsForward = new Vector3[] { }.AddRepeat(Vector3.Forward, 4).ToArray();
+        public static readonly Vector3[] NormalsBack = new Vector3[] { }.AddRepeat(Vector3.Backward, 4).ToArray();
 
         public static void CreateCubeNormals(List<Vector3> normals, CubeFace face)
         {

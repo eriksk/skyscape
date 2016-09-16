@@ -19,14 +19,19 @@ namespace SkyScape.Core.Meshes
         public Mesh(GraphicsDevice graphics, MeshData data)
         {
             _primitiveType = data.PrimitiveType;
-            _vertexBuffer = new VertexBuffer(graphics, VertexPositionColorNormal.VertexDeclaration, data.Vertices.Count, BufferUsage.WriteOnly);
-            _indexBuffer = new IndexBuffer(graphics, typeof(int), data.Indices.Count, BufferUsage.WriteOnly);
+            if (data.UsesColor)
+            {
+                _vertexBuffer = new VertexBuffer(graphics, VertexPositionColorNormal.VertexDeclaration, data.Vertices.Count, BufferUsage.WriteOnly);
+                _vertexBuffer.SetData(data.VertexPositionColorNormals);
+            }
+            else if (data.UsesTexture)
+            {
+                _vertexBuffer = new VertexBuffer(graphics, VertexPositionNormalTexture.VertexDeclaration, data.Vertices.Count, BufferUsage.WriteOnly);
+                _vertexBuffer.SetData(data.VertexPositionNormalTextures);
+            }
 
-            var vertices = new VertexPositionColorNormal[data.Vertices.Count];
-            for (int i = 0; i < data.Vertices.Count; i++)
-                vertices[i] = new VertexPositionColorNormal(data.Vertices[i], data.Colors[i], data.Normals[i]);
-            _vertexBuffer.SetData(vertices);
-            _indexBuffer.SetData(data.Indices.ToArray());
+            _indexBuffer = new IndexBuffer(graphics, typeof(int), data.IndicesArray.Length, BufferUsage.WriteOnly);
+            _indexBuffer.SetData(data.IndicesArray);
 
             _vertexCount = _vertexBuffer.VertexCount;
             _primitiveCount = data.Triangles;

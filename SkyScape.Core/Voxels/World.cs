@@ -12,7 +12,7 @@ namespace SkyScape.Core.Voxels
 {
     public class World
     {
-        public static int ChunkSize = 32;
+        public static int ChunkSize = 64;
         public static bool UseMultiThreading = true;
         public static float ViewDistance = 1000;
 

@@ -11,6 +11,7 @@ namespace SkyScape.Core.Voxels
     {
         public readonly int[,,] _data;
         private bool _dirty;
+        private bool _canGenerate;
         private readonly int _x;
         private readonly int _y;
         private readonly int _z;
@@ -30,7 +31,7 @@ namespace SkyScape.Core.Voxels
             _dirty = true;
         }
 
-        public bool Dirty => _dirty;
+        public bool Dirty => _dirty && _canGenerate;
 
         public int X => _x;
         public int Y => _y;
@@ -92,6 +93,11 @@ namespace SkyScape.Core.Voxels
 
         }
 
+        public void MarkAsReadyToGenerate()
+        {
+            _canGenerate = true;
+        }
+
         private MeshData _tempMeshData = null;
 
         private void FinalizeMeshOnMainThread(GraphicsDevice graphics)
@@ -117,6 +123,7 @@ namespace SkyScape.Core.Voxels
             _tempMeshData = null; // clear mesh data ref
             // reset states
             _isCleaning = false;
+            _canGenerate = false;
         }
 
         private void GenerateChunkMesh(World world)

@@ -12,8 +12,8 @@ namespace SkyScape.Core.Voxels.Threading
 {
     public class ChunkGenerationBatcher
     {
-        public static int MaxConcurrent = 12;
-        public static float ConsumeInterval = 60f; // TODO: by timespan?
+        public static int MaxConcurrent = 8;
+        public static float ConsumeInterval = 120f; // TODO: by timespan?
         public static int MaxToConsumeEachTime = 1;
 
         public static bool PerformaceTracking = true;
@@ -151,7 +151,7 @@ namespace SkyScape.Core.Voxels.Threading
     {
         public Chunk Chunk { get; }
         public World World { get; }
-        private Thread _thread { get; }
+        //private Thread _thread { get; }
         private Action<World> _work { get; }
         private Action<GraphicsDevice> _mainThreadWork { get; }
 
@@ -166,25 +166,6 @@ namespace SkyScape.Core.Voxels.Threading
             _work = work;
             _mainThreadWork = mainThreadWork;
 
-            _thread = new Thread(() => 
-            {
-                try
-                {
-                    var stopwatch = new Stopwatch();
-                    stopwatch.Start();
-                    _work(World);
-                    stopwatch.Stop();
-                    if (ChunkGenerationBatcher.PerformaceTracking)
-                    {
-                        ChunkGeneratorPerformanceTracker.Log(stopwatch.ElapsedMilliseconds);
-                    }
-                }
-                catch (ThreadAbortException ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-                Done = true;
-            });
         }
 
         public void Start()
@@ -192,7 +173,19 @@ namespace SkyScape.Core.Voxels.Threading
             if (Started) return;
 
             Started = true;
-            _thread.Start();
+
+            ThreadPool.QueueUserWorkItem((f) =>
+            {
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+                _work(World);
+                stopwatch.Stop();
+                if (ChunkGenerationBatcher.PerformaceTracking)
+                {
+                    ChunkGeneratorPerformanceTracker.Log(stopwatch.ElapsedMilliseconds);
+                }
+                Done = true;
+            }, null);
         }
 
         public void ConsumeOnMainThread(GraphicsDevice graphics)
@@ -205,7 +198,7 @@ namespace SkyScape.Core.Voxels.Threading
 
         public void Kill()
         {
-            _thread.Abort();
+            //_thread.Abort();
         }
     }
 }

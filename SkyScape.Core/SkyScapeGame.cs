@@ -32,6 +32,7 @@ namespace SkyScape.Core
         private Game _game;
 
         StandardEffect _effect;
+        private Texture2D _spriteSheet;
 
         private World _world;
         private Camera _cam;
@@ -65,14 +66,14 @@ namespace SkyScape.Core
             _graphicsDeviceManager.PreferredBackBufferWidth = 1280;
             _graphicsDeviceManager.PreferredBackBufferHeight = 720;
             _graphicsDeviceManager.SynchronizeWithVerticalRetrace = false;
-            _game.IsFixedTimeStep = true;
+            _game.IsFixedTimeStep = false;
             _graphicsDeviceManager.ApplyChanges();
 
             _rasterizerState = _graphics.RasterizerState;
 
             _fpsCounter = new FrameCounter();
 
-            ThreadPool.SetMaxThreads(4, 4);
+            ThreadPool.SetMaxThreads(6, 4);
         }
 
         public void Load()
@@ -80,6 +81,8 @@ namespace SkyScape.Core
             _debugFont = _content.Load<SpriteFont>(@"Fonts/debug");
             _depthEffect = _content.Load<Effect>(@"Shaders/Depth");
             _effect = new StandardEffect(_content.Load<Effect>(@"Shaders/Standard"));
+            _spriteSheet = _content.Load<Texture2D>(@"Gfx/sheet");
+            _effect.Texture = _spriteSheet;
 
             _mainTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
             _ssaoTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);

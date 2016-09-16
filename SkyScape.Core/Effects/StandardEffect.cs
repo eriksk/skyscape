@@ -19,7 +19,7 @@ namespace SkyScape.Core.Effects
         public Matrix View { get; set; } = Matrix.Identity;
         public Matrix Projection { get; set; } = Matrix.Identity;
 
-        public float AmbientIntensity { get; set; } = 0.3f;
+        public float AmbientIntensity { get; set; } = 0.1f;
         public Color AmbientColor { get; set; } = Color.White;
 
         public float DiffuseIntensity { get; set; } = 0.7f;
@@ -29,6 +29,8 @@ namespace SkyScape.Core.Effects
         public float Alpha { get; set; } = 1f;
 
         public float FarClip { get; set; } = 100f;
+
+        public Texture2D Texture { get; set; }
 
         public void ApplyForModel(Matrix world)
         {
@@ -56,8 +58,9 @@ namespace SkyScape.Core.Effects
             // Depth
             Parameters["_FarClip"].SetValue(FarClip);
 
-            // Color
+            // Color & Texture
             Parameters["_Alpha"].SetValue(Alpha);
+            Parameters["_MainTex"].SetValue(Texture);
 
             return base.OnApply();
         }

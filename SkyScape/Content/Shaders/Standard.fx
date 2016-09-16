@@ -7,6 +7,15 @@
 	#define PS_SHADERMODEL ps_4_0_level_9_1
 #endif
 
+texture _MainTex;
+sampler2D textureSampler = sampler_state {
+	Texture = (_MainTex);
+	MagFilter = Point;
+	MinFilter = Point;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
 matrix _WorldViewProjection;
 float4x4 _WorldInverseTranspose;
 
@@ -25,6 +34,7 @@ struct VertexShaderInput
 	float4 Position : SV_POSITION;
 	float4 Color : COLOR0;
 	float4 Normal : NORMAL0;
+	float2 Uv : TEXCOORD0;
 };
 
 struct VertexShaderOutput
@@ -33,6 +43,7 @@ struct VertexShaderOutput
 	float4 Color : COLOR0;
 	float3 Normal : TEXCOORD1;
 	float Depth : COLOR1;
+	float2 Uv : TEXCOORD0;
 };
 
 struct PS_OUTPUT
@@ -46,13 +57,13 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 	VertexShaderOutput output = (VertexShaderOutput)0;
 
 	output.Position = mul(input.Position, _WorldViewProjection);
+	output.Uv = input.Uv;
 
 	float3 normal = mul(input.Normal, _WorldInverseTranspose);
 
 	float4 diffuseLightIntensity = dot(normal, -_DiffuseLightDirection);
 
 	output.Color = saturate(input.Color + _DiffuseColor * _DiffuseIntensity * diffuseLightIntensity);
-//	output.Color = input.Color + saturate(_DiffuseIntensity * _DiffuseColor * diffuseLightIntensity); // input.Color + (_DiffuseIntensity * _DiffuseColor * diffuseLightIntensity);
 
 	output.Normal = normal;
 	output.Depth = 1.0 - (output.Position.z / _FarClip);
@@ -65,7 +76,10 @@ PS_OUTPUT MainPS(VertexShaderOutput input) : COLOR
 
 	PS_OUTPUT output = (PS_OUTPUT)0;
 
-	output.Color = float4(saturate(input.Color + _AmbientColor * _AmbientIntensity).rgb, _Alpha);
+	float4 textureColor = tex2D(textureSampler, input.Uv);
+	textureColor.a = 1.0;
+
+	output.Color = float4(saturate((textureColor) + _AmbientColor * _AmbientIntensity).rgb, _Alpha);
 	output.Depth = float4(input.Depth, input.Depth, input.Depth, 1.0);
 
 	return output;
