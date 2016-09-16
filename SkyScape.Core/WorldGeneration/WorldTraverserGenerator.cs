@@ -1,4 +1,6 @@
-﻿using SkyScape.Core.Components;
+﻿using Microsoft.Xna.Framework;
+using SkyScape.Core.Cameras;
+using SkyScape.Core.Components;
 using SkyScape.Core.Voxels;
 using System;
 using System.Collections;
@@ -17,6 +19,10 @@ namespace SkyScape.Core.WorldGeneration
         private HashSet<VoxelPosition> _surroundingChunks;
         private ChunkDataGenerationBatcher _batcher;
 
+        public const int XDistanceCheck = 3;
+        public const int YDistanceCheck = 4;
+        public const int ZDistanceCheck = 3;
+
         public Transform Target { get; set; }
 
         public WorldTraverserGenerator(World world, WorldGenerator generator)
@@ -27,17 +33,17 @@ namespace SkyScape.Core.WorldGeneration
             _batcher = new ChunkDataGenerationBatcher(generator);
         }
 
-        public void Update(float dt)
+        public void Update(float dt, Camera cam)
         {
             if (Target == null) throw new Exception("No target to follow!");
             _batcher.Update(dt);
-            UpdateSurroundingChunks();
+            UpdateSurroundingChunks(cam);
         }
 
-        private void UpdateSurroundingChunks()
+        private void UpdateSurroundingChunks(Camera cam)
         {
             var currentChunk = _world.GetChunkPosition(Target.Position);
-            var nearbyChunks = GetNearbyChunks(currentChunk, 1, 2, 1);
+            var nearbyChunks = GetNearbyChunks(currentChunk, XDistanceCheck, YDistanceCheck, ZDistanceCheck);
 
             var addedChunks = new List<VoxelPosition>();
             foreach (var chunk in nearbyChunks)
@@ -60,18 +66,17 @@ namespace SkyScape.Core.WorldGeneration
             }
 
             RemoveChunks(removedChunks);
-            AddChunks(addedChunks);
+            AddChunks(addedChunks, cam);
         }
 
-        private void AddChunks(List<VoxelPosition> chunks)
+        private void AddChunks(List<VoxelPosition> chunks, Camera cam)
         {
-            foreach (var chunkPosition in chunks)
+            foreach (var chunkPosition in chunks.OrderBy(x => Vector3.Distance(new Vector3(x.X * World.ChunkSize, x.Y * World.ChunkSize, x.Z * World.ChunkSize) + new Vector3(World.ChunkSize) * 0.5f, cam.Transform.Position)))
             {
                 _surroundingChunks.Add(chunkPosition);
                 if (_world.ChunkExist(chunkPosition)) continue;
                 var chunk = _world.GetOrCreateChunk(chunkPosition);
 
-                //GenerateForChunk(chunk, _generator);
                 _batcher.AddJob(chunk, GenerateForChunk);              
             }
         }
@@ -97,7 +102,8 @@ namespace SkyScape.Core.WorldGeneration
             {
                 _surroundingChunks.Remove(chunk);
                 _batcher.KillJobsFor(chunk);
-                //_world.RemoveChunk(chunk);
+                // TODO: Uncomment, but causes lookups in the mesh because background threads wont stop
+                _world.RemoveChunk(chunk);
             }
         }
 

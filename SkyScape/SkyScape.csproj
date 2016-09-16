@@ -68,6 +68,7 @@
     <None Include="Content\Gfx\perlin_1.png" />
     <None Include="Content\Gfx\sheet.png" />
     <None Include="Content\Shaders\DepthOfField.fx" />
+    <None Include="Content\Shaders\Bloom.fx" />
     <Content Include="OpenTK.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

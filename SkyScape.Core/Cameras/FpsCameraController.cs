@@ -19,7 +19,7 @@ namespace SkyScape.Core.Cameras
         public float MouseSpeed { get; set; } = 1f;
 
         public float MoveSpeed { get; set; } = 1f;
-        public float SprintMultiplier { get; set; } = 15f;
+        public float SprintMultiplier { get; set; } = 7f;
 
         public FpsCameraController(Camera camera)
         {

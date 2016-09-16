@@ -9,13 +9,23 @@ namespace SkyScape.Core.Noise
 {
     public class SimplexNoiseGenerator : INoise
     {
-        static SimplexNoiseGenerator()
+        public int Octaves { get; set; }
+        public double Amplitude { get; set; }
+        public double Persistence { get; set; }
+        public double Frequency { get; set; }
+
+        public SimplexNoiseGenerator(int seed)
         {
+            Seed = seed;
             perm = new byte[permOriginal.Length];
             permOriginal.CopyTo(perm, 0);
+            Octaves = 8;
+            Amplitude = 1;
+            Frequency = 0.015;
+            Persistence = 0.65;
         }
 
-        public static int Seed
+        public int Seed
         {
             get { return seed; }
             set
@@ -33,16 +43,16 @@ namespace SkyScape.Core.Noise
                 }
             }
         }
-        private static int seed = 0;
+        private int seed = 0;
 
         public float Noise(int x, float scale)
         {
-            return Generate(x * scale) * 128 + 128;
+            return Generate(x * scale);
         }
 
-        public float Noise(int x, int y, float scale)
+        public float Noise(float x, float y, float scale)
         {
-            return Generate(x * scale, y * scale) * 128 + 128;
+            return Generate(x * scale, y * scale);
         }
 
         public float Noise(int x, int y, int z, float scale)
@@ -54,12 +64,49 @@ namespace SkyScape.Core.Noise
             return Generate(x * scale, y * scale, z * scale);
         }
 
+        public float Height(int x, int y)
+        {
+            //returns -1 to 1
+            double total = 0.0;
+            double freq = Frequency, amp = Amplitude;
+            for (int i = 0; i < Octaves; ++i)
+            {
+                total = total + Smooth(x * freq, y * freq) * amp;
+                freq *= 2;
+                amp *= Persistence;
+            }
+            if (total < -2.4) total = -2.4;
+            else if (total > 2.4) total = 2.4;
+
+            return (float)(total / 2.4);
+        }
+
+        private double Smooth(double x, double y)
+        {
+            double n1 = Noise((int)x, (int)y);
+            double n2 = Noise((int)x + 1, (int)y);
+            double n3 = Noise((int)x, (int)y + 1);
+            double n4 = Noise((int)x + 1, (int)y + 1);
+
+            double i1 = Interpolate(n1, n2, x - (int)x);
+            double i2 = Interpolate(n3, n4, x - (int)x);
+
+            return Interpolate(i1, i2, y - (int)y);
+        }
+
+        private double Interpolate(double x, double y, double a)
+        {
+            double value = (1 - Math.Cos(a * Math.PI)) * 0.5;
+            return x * (1 - value) + y * value;
+        }
+
+
         /// <summary>
         /// 1D simplex noise
         /// </summary>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static float Generate(float x)
+        internal float Generate(float x)
         {
             int i0 = FastFloor(x);
             int i1 = i0 + 1;
@@ -86,7 +133,7 @@ namespace SkyScape.Core.Noise
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal static float Generate(float x, float y)
+        internal float Generate(float x, float y)
         {
             const float F2 = 0.366025403f; // F2 = 0.5*(sqrt(3.0)-1.0)
             const float G2 = 0.211324865f; // G2 = (3.0-Math.sqrt(3.0))/6.0
@@ -156,7 +203,7 @@ namespace SkyScape.Core.Noise
         }
 
 
-        internal static float Generate(float x, float y, float z)
+        internal float Generate(float x, float y, float z)
         {
             // Simple skewing factors for the 3D case
             const float F3 = 0.333333333f;
@@ -259,7 +306,7 @@ namespace SkyScape.Core.Noise
             return 32.0f * (n0 + n1 + n2 + n3); // TODO: The scale factor is preliminary!
         }
 
-        private static byte[] perm;
+        private byte[] perm;
 
         private static readonly byte[] permOriginal = new byte[]
         {
@@ -291,18 +338,18 @@ namespace SkyScape.Core.Noise
         138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
         };
 
-        private static int FastFloor(float x)
+        private int FastFloor(float x)
         {
             return (x > 0) ? ((int)x) : (((int)x) - 1);
         }
 
-        private static int Mod(int x, int m)
+        private int Mod(int x, int m)
         {
             int a = x % m;
             return a < 0 ? a + m : a;
         }
 
-        private static float grad(int hash, float x)
+        private float grad(int hash, float x)
         {
             int h = hash & 15;
             float grad = 1.0f + (h & 7);   // Gradient value 1.0, 2.0, ..., 8.0
@@ -310,7 +357,7 @@ namespace SkyScape.Core.Noise
             return (grad * x);           // Multiply the gradient with the distance
         }
 
-        private static float grad(int hash, float x, float y)
+        private float grad(int hash, float x, float y)
         {
             int h = hash & 7;      // Convert low 3 bits of hash code
             float u = h < 4 ? x : y;  // into 8 simple gradient directions,
@@ -318,7 +365,7 @@ namespace SkyScape.Core.Noise
             return ((h & 1) != 0 ? -u : u) + ((h & 2) != 0 ? -2.0f * v : 2.0f * v);
         }
 
-        private static float grad(int hash, float x, float y, float z)
+        private float grad(int hash, float x, float y, float z)
         {
             int h = hash & 15;     // Convert low 4 bits of hash code into 12 simple
             float u = h < 8 ? x : y; // gradient directions, and compute dot product.
@@ -326,7 +373,7 @@ namespace SkyScape.Core.Noise
             return ((h & 1) != 0 ? -u : u) + ((h & 2) != 0 ? -v : v);
         }
 
-        private static float grad(int hash, float x, float y, float z, float t)
+        private float grad(int hash, float x, float y, float z, float t)
         {
             int h = hash & 31;      // Convert low 5 bits of hash code into 32 simple
             float u = h < 24 ? x : y; // gradient directions, and compute dot product.

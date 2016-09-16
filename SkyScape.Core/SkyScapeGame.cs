@@ -40,7 +40,7 @@ namespace SkyScape.Core
         private WorldTraverserGenerator _traverser;
         private WorldGenerator _generator;
 
-        private Effect _depthEffect, _depthOfField;
+        private Effect _depthEffect, _depthOfField, _bloom;
         private ScreenSpaceAmbientOcclusion _ssao;
         private RenderTarget2D _mainTarget;
         private RenderTarget2D _depthTarget;
@@ -74,7 +74,7 @@ namespace SkyScape.Core
 
             _fpsCounter = new FrameCounter();
 
-            ThreadPool.SetMaxThreads(6, 4);
+            ThreadPool.SetMaxThreads(12, 4);
         }
 
         public void Load()
@@ -85,6 +85,7 @@ namespace SkyScape.Core
             _spriteSheet = _content.Load<Texture2D>(@"Gfx/sheet");
             _effect.Texture = _spriteSheet;
             _depthOfField = _content.Load<Effect>(@"Shaders/DepthOfField");
+            _bloom  = _content.Load<Effect>(@"Shaders/Bloom");
 
             _mainTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
             _ssaoTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
@@ -224,7 +225,7 @@ namespace SkyScape.Core
             _game.Window.Title = "FPS: " + (int)(_fpsCounter.AverageFramesPerSecond + 1);
 
 
-            _traverser.Update(dt);
+            _traverser.Update(dt, _cam);
             _world.Update(dt);
             _camController.Update(dt);
 
@@ -371,16 +372,30 @@ namespace SkyScape.Core
                 _spriteBatch.End();
 
                 // Render to BB with dof
-                _graphics.SetRenderTarget(null);
+                _graphics.SetRenderTarget(_mainTarget);
                 _graphics.Clear(Color.CornflowerBlue);
                 _depthOfField.Parameters["depthTex"].SetValue(_depthTarget);
-                _depthOfField.Parameters["_Blur"].SetValue(8f);
-                _depthOfField.Parameters["_SampleDistance"].SetValue(0.0005f);
+                _depthOfField.Parameters["_Blur"].SetValue(6f);
+                _depthOfField.Parameters["_SampleDistance"].SetValue(0.001f);
                 _depthOfField.Parameters["_Distance"].SetValue(2f);
-                _depthOfField.Parameters["_Range"].SetValue(64f);
+                _depthOfField.Parameters["_Range"].SetValue(128f);
                 _depthOfField.Parameters["_Far"].SetValue(_cam.FarClip);
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _depthOfField);
                 _spriteBatch.Draw(_dofTarget, new Rectangle(0, 0, 1280, 720), Color.White);
+                _spriteBatch.End();
+
+                _graphics.SetRenderTarget(null);
+                _graphics.Clear(Color.CornflowerBlue);
+                _bloom.Parameters["_Amount"].SetValue(0.14f);
+                _bloom.Parameters["_Treshold"].SetValue(0.56f);
+                _bloom.Parameters["_SampleDistance"].SetValue(0.01f);
+                _bloom.Parameters["_Blur"].SetValue(0.8f);
+
+                //_spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null);
+                //_spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
+                //_spriteBatch.End();
+                _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _bloom);
+                _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
             }
             else

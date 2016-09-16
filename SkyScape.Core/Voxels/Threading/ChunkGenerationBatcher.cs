@@ -12,9 +12,8 @@ namespace SkyScape.Core.Voxels.Threading
 {
     public class ChunkGenerationBatcher
     {
-        public static int MaxConcurrent = 8;
-        public static float ConsumeInterval = 120f; // TODO: by timespan?
-        public static int MaxToConsumeEachTime = 1;
+        public static float ConsumeInterval = 19f; // TODO: by timespan?
+        public static int MaxToConsumeEachTime = 4;
 
         public static bool PerformaceTracking = true;
 
@@ -65,17 +64,12 @@ namespace SkyScape.Core.Voxels.Threading
             _currentConsumeTime += dt;
             _jobs.RemoveAll(x => x.Done && x.Consumed);
             int working = _jobs.Count(x => x.Started);
-            int countOfThreadsCanBeStarted = MaxConcurrent - working;
-            if (countOfThreadsCanBeStarted <= 0) return;
 
             var jobsAvailable = _jobs.Where(x => !x.Started);
 
             foreach (var job in jobsAvailable)
             {
                 job.Start();
-                countOfThreadsCanBeStarted--;
-                if (countOfThreadsCanBeStarted <= 0)
-                    break;
             }
         }
 
@@ -86,7 +80,7 @@ namespace SkyScape.Core.Voxels.Threading
 
             foreach (var job in _jobs
                 .Where(x => x.Started && x.Done && !x.Consumed)
-                .OrderBy(x => Vector3.Distance(x.Chunk.Center, position))
+                .OrderByDescending(x => Vector3.Distance(x.Chunk.Center, position))
                 .Take(MaxToConsumeEachTime).ToArray())
                 job.ConsumeOnMainThread(graphics);
         }
