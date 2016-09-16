@@ -11,7 +11,7 @@ texture _MainTex;
 sampler2D textureSampler = sampler_state {
 	Texture = (_MainTex);
 	MagFilter = Point;
-	MinFilter = Point;
+	MinFilter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };

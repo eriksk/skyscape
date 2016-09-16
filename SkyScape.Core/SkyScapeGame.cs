@@ -40,11 +40,12 @@ namespace SkyScape.Core
         private WorldTraverserGenerator _traverser;
         private WorldGenerator _generator;
 
-        private Effect _depthEffect;
+        private Effect _depthEffect, _depthOfField;
         private ScreenSpaceAmbientOcclusion _ssao;
         private RenderTarget2D _mainTarget;
         private RenderTarget2D _depthTarget;
         private RenderTarget2D _ssaoTarget;
+        private RenderTarget2D _dofTarget;
         private bool _ambientOcclusion = false;
         private RasterizerState _rasterizerState;
 
@@ -83,9 +84,11 @@ namespace SkyScape.Core
             _effect = new StandardEffect(_content.Load<Effect>(@"Shaders/Standard"));
             _spriteSheet = _content.Load<Texture2D>(@"Gfx/sheet");
             _effect.Texture = _spriteSheet;
+            _depthOfField = _content.Load<Effect>(@"Shaders/DepthOfField");
 
             _mainTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
             _ssaoTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
+            _dofTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
             _depthTarget = new RenderTarget2D(_graphics,
                                                 1280,
                                                 720,
@@ -358,13 +361,26 @@ namespace SkyScape.Core
                 _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
 
-                // Bake SSAO map with main target
-                _graphics.SetRenderTarget(null);
+                // Bake SSAO map with main target to dof target
+                _graphics.SetRenderTarget(_dofTarget);
                 _graphics.Clear(Color.CornflowerBlue);
                 _ssao.CurrentTechnique = _ssao.Techniques["SSAO_Apply"];
                 _ssao.DepthTexture = _ssaoTarget;
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _ssao);
                 _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
+                _spriteBatch.End();
+
+                // Render to BB with dof
+                _graphics.SetRenderTarget(null);
+                _graphics.Clear(Color.CornflowerBlue);
+                _depthOfField.Parameters["depthTex"].SetValue(_depthTarget);
+                _depthOfField.Parameters["_Blur"].SetValue(8f);
+                _depthOfField.Parameters["_SampleDistance"].SetValue(0.0005f);
+                _depthOfField.Parameters["_Distance"].SetValue(2f);
+                _depthOfField.Parameters["_Range"].SetValue(64f);
+                _depthOfField.Parameters["_Far"].SetValue(_cam.FarClip);
+                _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _depthOfField);
+                _spriteBatch.Draw(_dofTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
             }
             else

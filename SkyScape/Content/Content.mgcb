@@ -73,3 +73,9 @@
 /processorParam:TextureFormat=Color
 /build:Gfx/sheet.png
 
+#begin Shaders/DepthOfField.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Shaders/DepthOfField.fx
+
