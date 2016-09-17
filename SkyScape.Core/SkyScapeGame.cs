@@ -364,7 +364,7 @@ namespace SkyScape.Core
 
                 // Bake SSAO map with main target to dof target
                 _graphics.SetRenderTarget(_dofTarget);
-                _graphics.Clear(Color.CornflowerBlue);
+                _graphics.Clear(Color.White);
                 _ssao.CurrentTechnique = _ssao.Techniques["SSAO_Apply"];
                 _ssao.DepthTexture = _ssaoTarget;
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _ssao);
@@ -373,7 +373,7 @@ namespace SkyScape.Core
 
                 // Render to BB with dof
                 _graphics.SetRenderTarget(_mainTarget);
-                _graphics.Clear(Color.CornflowerBlue);
+                _graphics.Clear(Color.Transparent);
                 _depthOfField.Parameters["depthTex"].SetValue(_depthTarget);
                 _depthOfField.Parameters["_Blur"].SetValue(6f);
                 _depthOfField.Parameters["_SampleDistance"].SetValue(0.001f);
@@ -385,11 +385,11 @@ namespace SkyScape.Core
                 _spriteBatch.End();
 
                 _graphics.SetRenderTarget(null);
-                _graphics.Clear(Color.CornflowerBlue);
-                _bloom.Parameters["_Amount"].SetValue(0.14f);
-                _bloom.Parameters["_Treshold"].SetValue(0.56f);
-                _bloom.Parameters["_SampleDistance"].SetValue(0.01f);
-                _bloom.Parameters["_Blur"].SetValue(0.8f);
+                _graphics.Clear(Color.Transparent);
+                _bloom.Parameters["_Amount"].SetValue(0f);
+                _bloom.Parameters["_Treshold"].SetValue(0.8f);
+                _bloom.Parameters["_SampleDistance"].SetValue(0.001f);
+                //_bloom.Parameters["_Blur"].SetValue(0.8f);
 
                 //_spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null);
                 //_spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);

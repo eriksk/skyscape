@@ -16,18 +16,28 @@ sampler2D textureSampler = sampler_state {
 	AddressV = Clamp;
 };
 
+// Camera
 matrix _WorldViewProjection;
 float4x4 _WorldInverseTranspose;
+float _FarClip;
 
+// Colors
+float _Alpha = 1.0;
+
+// Ambient Light
 float4 _AmbientColor;
 float _AmbientIntensity;
 
+// Directional Diffuse Light
 float3 _DiffuseLightDirection = float3(1, 0, 0);
 float4 _DiffuseColor = float4(1, 1, 1, 1);
 float _DiffuseIntensity = 1.0;
-float _Alpha = 1.0;
 
-float _FarClip;
+// Fog
+float _FogEnabled;
+float _FogStart;
+float _FogEnd;
+float3 _FogColor;
 
 struct VertexShaderInput
 {
@@ -44,6 +54,7 @@ struct VertexShaderOutput
 	float3 Normal : TEXCOORD1;
 	float Depth : COLOR1;
 	float2 Uv : TEXCOORD0;
+	float FogFactor : TEXCOORD2;
 };
 
 struct PS_OUTPUT
@@ -51,6 +62,15 @@ struct PS_OUTPUT
 	float4 Color: SV_Target0;
 	float4 Depth: SV_Target1;
 };
+
+float ComputeFogFactor(float d)
+{
+	//d is the distance to the geometry sampling from the camera
+	//this simply returns a value that interpolates from 0 to 1 
+	//with 0 starting at FogStart and 1 at FogEnd 
+	return clamp((d - _FogStart) / (_FogEnd - _FogStart), 0, 1) * _FogEnabled;
+}
+
 
 VertexShaderOutput MainVS(in VertexShaderInput input)
 {
@@ -60,13 +80,13 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 	output.Uv = input.Uv;
 
 	float3 normal = mul(input.Normal, _WorldInverseTranspose);
-
 	float4 diffuseLightIntensity = dot(normal, -_DiffuseLightDirection);
-
 	output.Color = saturate(input.Color + _DiffuseColor * _DiffuseIntensity * diffuseLightIntensity);
 
 	output.Normal = normal;
 	output.Depth = 1.0 - (output.Position.z / _FarClip);
+
+	output.FogFactor = ComputeFogFactor(length(output.Position.z));
 
 	return output;
 }
@@ -79,7 +99,7 @@ PS_OUTPUT MainPS(VertexShaderOutput input) : COLOR
 	float4 textureColor = tex2D(textureSampler, input.Uv);
 	textureColor.a = 1.0;
 
-	output.Color = float4(saturate((textureColor) + _AmbientColor * _AmbientIntensity).rgb, _Alpha);
+	output.Color = lerp(float4(saturate((textureColor) + _AmbientColor * _AmbientIntensity).rgb, _Alpha), float4(_FogColor, _Alpha), input.FogFactor);
 	output.Depth = float4(input.Depth, input.Depth, input.Depth, 1.0);
 
 	return output;

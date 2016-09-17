@@ -28,6 +28,12 @@ namespace SkyScape.Core.Effects
 
         public float Alpha { get; set; } = 1f;
 
+
+        public bool FogEnabled { get; set; } = true;
+        public float FogStart { get; set; } = 100;
+        public float FogEnd { get; set; } = 200;
+        public Color FogColor { get; set; } = Color.White;
+
         public float FarClip { get; set; } = 100f;
 
         public Texture2D Texture { get; set; }
@@ -61,6 +67,12 @@ namespace SkyScape.Core.Effects
             // Color & Texture
             Parameters["_Alpha"].SetValue(Alpha);
             Parameters["_MainTex"].SetValue(Texture);
+
+            // Fog
+            Parameters["_FogEnabled"].SetValue(FogEnabled ? 1f : 0f);
+            Parameters["_FogStart"].SetValue(FogStart);
+            Parameters["_FogEnd"].SetValue(FogEnd);
+            Parameters["_FogColor"].SetValue(FogColor.ToVector3());
 
             return base.OnApply();
         }

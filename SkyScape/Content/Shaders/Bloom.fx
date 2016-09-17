@@ -3,7 +3,6 @@
 float _Amount;
 float _Treshold;
 
-float _Blur;
 float _SampleDistance;
 
 static const float2 directions[12] = {
@@ -23,23 +22,18 @@ static const float2 directions[12] = {
 
 float4 main(float4 pos : SV_POSITION, float4 color : COLOR0, float2 uv : TEXCOORD0) : COLOR0
 {
-	float4 blur = tex2D(mainTex, uv);
+	float4 col = tex2D(mainTex, uv);
 
 	for (int i = 0; i < 12; i++)
-		blur += tex2D(mainTex, uv.xy + float2(directions[i] * _SampleDistance) * _Blur);
+		col += tex2D(mainTex, uv.xy + float2(directions[i] * _SampleDistance));
+	col /= 12.0;
 
-	blur /= 12.0;
-	blur.a = 1.0;
+	float rgb = (col.r + col.g + col.b) / 3.0;
 
-	float rgb = (blur.r + blur.g + blur.b) / 3.0;
+	if (rgb < _Treshold)
+		col.rgb = 0.0;
 
-	if(rgb < _Treshold)
-	{
-		blur.rgb = 0.0;
-	}
-
-	float4 col = tex2D(mainTex, uv);
-	return col + (blur * _Amount);
+	return (tex2D(mainTex, uv) * color) + (col * _Amount);
 }
 
 
