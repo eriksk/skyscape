@@ -50,7 +50,7 @@ namespace SkyScape.Core.WorldGeneration
                 return Voxel.Types[Voxel.Empty];
 
             var noise = (_baseNoise.Noise((float)x, (float)y, (float)z, 0.0467f) +
-                _baseNoise.Noise((float)x, (float)y, (float)z, 0.1467f)) / 2f;
+                _baseNoise.Noise((float)x + 64, (float)y + 64, (float)z + 64, 0.0467f)) / 2f;
 
             if(noise < 0f)
                 return Voxel.Types[Voxel.Empty];

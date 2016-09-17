@@ -271,6 +271,9 @@ namespace SkyScape.Core
 
         public void Draw(GameTime gameTime)
         {
+            var backgroundColor = Color.SkyBlue;
+            _effect.FogColor = backgroundColor;
+
             if (_postProcessed)
             {
                 _graphics.SetRenderTargets(_mainTarget, _depthTarget);
@@ -344,7 +347,7 @@ namespace SkyScape.Core
 
                 // Bake SSAO map with main target to dof target
                 _graphics.SetRenderTarget(_dofTarget);
-                _graphics.Clear(Color.White);
+                _graphics.Clear(backgroundColor);
                 _ssao.CurrentTechnique = _ssao.Techniques["SSAO_Apply"];
                 _ssao.DepthTexture = _ssaoTarget;
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _ssao);
@@ -362,9 +365,9 @@ namespace SkyScape.Core
 
                 _graphics.SetRenderTarget(null);
                 _graphics.Clear(Color.Transparent);
-                _bloom.Parameters["_Amount"].SetValue(0f);
-                _bloom.Parameters["_Treshold"].SetValue(0.8f);
-                _bloom.Parameters["_SampleDistance"].SetValue(0.001f);
+                _bloom.Parameters["_Amount"].SetValue(0.12f);
+                _bloom.Parameters["_Treshold"].SetValue(0.76f);
+                _bloom.Parameters["_SampleDistance"].SetValue(0.01f);
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _bloom);
                 _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
