@@ -33,6 +33,7 @@ namespace SkyScape.Core
 
         StandardEffect _effect;
         private Texture2D _spriteSheet;
+        Texture2D _corshair;
 
         private World _world;
         private Camera _cam;
@@ -40,17 +41,20 @@ namespace SkyScape.Core
         private WorldTraverserGenerator _traverser;
         private WorldGenerator _generator;
 
-        private Effect _depthEffect, _depthOfField, _bloom;
+        private Effect _depthEffect, _bloom;
+        private DepthOfField _depthOfField;
         private ScreenSpaceAmbientOcclusion _ssao;
         private RenderTarget2D _mainTarget;
         private RenderTarget2D _depthTarget;
         private RenderTarget2D _ssaoTarget;
         private RenderTarget2D _dofTarget;
-        private bool _ambientOcclusion = false;
+        private bool _postProcessed = false;
         private RasterizerState _rasterizerState;
 
         private SpriteFont _debugFont;
         private FrameCounter _fpsCounter;
+
+        private Mesh _selectBox;
 
 
         public SkyScapeGame(Game game, GraphicsDevice graphics, ContentManager content, GraphicsDeviceManager graphicsDeviceManager)
@@ -84,8 +88,10 @@ namespace SkyScape.Core
             _effect = new StandardEffect(_content.Load<Effect>(@"Shaders/Standard"));
             _spriteSheet = _content.Load<Texture2D>(@"Gfx/sheet");
             _effect.Texture = _spriteSheet;
-            _depthOfField = _content.Load<Effect>(@"Shaders/DepthOfField");
+            _depthOfField = new DepthOfField(_content.Load<Effect>(@"Shaders/DepthOfField"));
             _bloom  = _content.Load<Effect>(@"Shaders/Bloom");
+
+            _corshair = _content.Load<Texture2D>(@"Gfx/corshair");
 
             _mainTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
             _ssaoTarget = new RenderTarget2D(_graphics, 1280, 720, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
@@ -113,105 +119,40 @@ namespace SkyScape.Core
             _generator = new WorldGenerator(0);
             _traverser = new WorldTraverserGenerator(_world, _generator);
             _traverser.Target = _cam.Transform;
+
+            GenerateSelectBox();
         }
 
-        private Color[,] TextureTo2DArray(Texture2D texture)
+        private void GenerateSelectBox()
         {
-            Color[] colorsOne = new Color[texture.Width * texture.Height]; //The hard to read,1D array
-            texture.GetData(colorsOne); //Get the colors and add them to the array
+            var boxData = new MeshData();
 
-            Color[,] colorsTwo = new Color[texture.Width, texture.Height]; //The new, easy to read 2D array
-            for (int x = 0; x < texture.Width; x++) //Convert!
-                for (int y = 0; y < texture.Height; y++)
-                    colorsTwo[x, y] = colorsOne[x + y * texture.Width];
+            ShapeFactory.CreateCubeFace(boxData.Vertices, CubeFace.Left);
+            ShapeFactory.CreateCubeFace(boxData.Vertices, CubeFace.Right);
+            ShapeFactory.CreateCubeFace(boxData.Vertices, CubeFace.Top);
+            ShapeFactory.CreateCubeFace(boxData.Vertices, CubeFace.Bottom);
+            ShapeFactory.CreateCubeFace(boxData.Vertices, CubeFace.Front);
+            ShapeFactory.CreateCubeFace(boxData.Vertices, CubeFace.Back);
 
-            return colorsTwo; //Done!
-        }
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 0);
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 4);
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 8);
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 12 + 4);
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 12 + 8);
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 12 + 12);
+            ShapeFactory.CreateCubeIndices(boxData.Indices, 12 + 20);
 
-        private void Generate()
-        {
-            _effect.Alpha = 1f;
-            var rand = new Random();
+            ShapeFactory.CreateCubeNormals(boxData.Normals, CubeFace.Left);
+            ShapeFactory.CreateCubeNormals(boxData.Normals, CubeFace.Right);
+            ShapeFactory.CreateCubeNormals(boxData.Normals, CubeFace.Top);
+            ShapeFactory.CreateCubeNormals(boxData.Normals, CubeFace.Bottom);
+            ShapeFactory.CreateCubeNormals(boxData.Normals, CubeFace.Front);
+            ShapeFactory.CreateCubeNormals(boxData.Normals, CubeFace.Back);
 
-            var sw = new Stopwatch();
-            sw.Start();
+            boxData.Colors = new Color[] { }.AddRepeat(Color.White, 24).ToList();
+            boxData.Optimize();
 
-            int seed = 0;//rand.Next(0, 1000000);
-            int worldSize = 512;
-
-            var perlinTex = _content.Load<Texture2D>(@"Gfx/perlin_1");
-            var pixels = TextureTo2DArray(perlinTex);
-            int offset = 0;
-
-            _world.Clear();
-
-            //for (int x = 0; x < pixels.GetLength(0) / 2; x++)
-            //{
-            //    for (int z = 0; z < pixels.GetLength(1) / 2; z++)
-            //    {
-            //        var mag = Math.Min(pixels[z, x].R / 2, 64);
-
-            //        for (int y = 0; y < mag; y++)
-            //        {
-            //            var voxel = (int)MathHelper.Lerp(0, Voxel.VoxelTypes.Length, y / (float)128) + 1;
-            //            _world.Set(x + offset, y + offset, z + offset, voxel);
-            //        }
-
-            //    }
-            //}
-
-            var voxels = new[]
-            {
-                Voxel.Water,
-                Voxel.Grass,
-                Voxel.Stone,
-                Voxel.Stone,
-                Voxel.Snow
-            };
-            var noise = new NoiseGenerator(new Random(seed));
-            noise.Octaves = 2;
-            noise.Frequency = 0.1f;
-
-            for (int x = 0; x < worldSize; x++)
-            {
-                for (int z = 0; z < worldSize; z++)
-                {
-                    var perlin = 0.5f + noise.Noise(x + seed, z + seed);
-
-                    int height = (int)(perlin * worldSize * 0.2f);
-                    for (int y = 0; y < height; y++)
-                    {
-                        var voxel = voxels[(int)MathHelper.Lerp(0, voxels.Length, y / (float)worldSize) + 1];
-                        _world.Set(x + offset, y + offset, z + offset, voxel);
-                    }
-                }
-            }
-
-            //for (int i = 0; i < 32; i++)
-            //{
-            //    _world.Set(0, 0, i, Voxel.Grass);
-            //    _world.Set(0, i, 0, Voxel.Rock);
-            //}
-
-            //_world.Set(0, 0, 0, Voxel.Rock);
-
-            //Box(new VoxelPosition(0, 0, 0), 16, Voxel.Rock);
-            //Box(new VoxelPosition(32, 0, 0), 16, Voxel.Grass);
-            //Box(new VoxelPosition(0, 32, 0), 16, Voxel.Gold);
-            //Box(new VoxelPosition(-32, -32, -32), 16, Voxel.Dirt);
-            //Box(new VoxelPosition(-16, -16, -16), 16, Voxel.Water);
-
-            sw.Stop();
-
-            Console.WriteLine($"Set world: {sw.ElapsedMilliseconds} ms");
-        }
-
-        private void Box(VoxelPosition origin, int size, int value)
-        {
-            for (int x = origin.X; x < origin.X + size; x++)
-                for (int y = origin.Y; y < origin.Y + size; y++)
-                    for (int z = origin.Z; z < origin.Z + size; z++)
-                        _world.Set(x, y, z, value);
+            _selectBox = new Mesh(_graphics, boxData);
         }
 
         KeyboardState _oldKeys;
@@ -233,9 +174,10 @@ namespace SkyScape.Core
 
             if(keyboard.IsKeyDown(Keys.O) && _oldKeys.IsKeyUp(Keys.O))
             {
-                _ambientOcclusion = !_ambientOcclusion;
+                _postProcessed = !_postProcessed;
             }
 
+            #region SSAO
             float radius = 0.0001f;
             float area = 0.0001f;
             float fallOff = 0.000001f;
@@ -283,11 +225,6 @@ namespace SkyScape.Core
                 _ssao.Blur -= blur * dt;
             }
 
-            if(Mouse.GetState().LeftButton == ButtonState.Pressed)
-            {
-                _world.SetFromPosition(_cam.Transform.Position, Voxel.Rock);
-            }
-
             if (keyboard.IsKeyDown(Keys.Enter))
             {
                 //Generate();
@@ -298,6 +235,25 @@ namespace SkyScape.Core
                     Radius: {_ssao.Radius}
                     ");
             }
+
+            #endregion
+
+            var mState = Mouse.GetState();
+
+            if (mState.LeftButton == ButtonState.Pressed || mState.RightButton == ButtonState.Pressed)
+            {
+                var rayHit = _world.RayCastFirst(_cam.Transform.Position, _cam.Transform.Forward, 16);
+                if (rayHit.Hit)
+                {
+                    // This doesnt work since, world generator overwrites this
+                    _world.Set(rayHit.Position, mState.LeftButton == ButtonState.Pressed ? Voxel.Rock : Voxel.Empty);
+                    var chunk = _world.GetOrCreateChunk(rayHit.Position);
+                    chunk?.MarkAsReadyToGenerate();
+                }
+            }
+
+
+            _depthOfField.Update(dt);
 
             _oldKeys = keyboard;
 
@@ -315,7 +271,7 @@ namespace SkyScape.Core
 
         public void Draw(GameTime gameTime)
         {
-            if (_ambientOcclusion)
+            if (_postProcessed)
             {
                 _graphics.SetRenderTargets(_mainTarget, _depthTarget);
                 _graphics.RasterizerState = _rasterizerState;
@@ -348,11 +304,35 @@ namespace SkyScape.Core
                 DrawLine(Vector3.Zero, Vector3.Forward * 500, Color.Blue);
                 DrawLine(Vector3.Zero, Vector3.Right * 500, Color.Green);
                 DrawLine(Vector3.Zero, Vector3.Up * 500, Color.Red);
+
+                // Ray hit block
+                var rayHit = _world.RayCastFirst(_cam.Transform.Position, _cam.Transform.Forward, 16);
+                if (rayHit.Hit)
+                {
+                    _effect.ApplyForModel(Matrix.CreateScale(1.1f, 1.1f, 1.1f) * Matrix.CreateTranslation(rayHit.WorldPosition));
+                    _effect.Alpha = 0.2f;
+                    _selectBox.Render(_graphics, _effect);
+                    _effect.Alpha = 1f;
+
+                }
             }
 
 
-            if (_ambientOcclusion)
+            if (_postProcessed)
             {
+
+                // Calculate DoF distance
+                var rayHit = _world.RayCastFirst(_cam.Transform.Position, _cam.Transform.Forward, 250);
+                if (rayHit.Hit)
+                {
+                    var distance = Vector3.Distance(_cam.Transform.Position, rayHit.WorldPosition);
+                    _depthOfField.Distance = distance;
+                }
+                else
+                {
+                    _depthOfField.Distance = 2f;
+                }
+
                 // render SSAO map
                 _graphics.SetRenderTarget(_ssaoTarget);
                 _ssao.DepthTexture = _depthTarget;
@@ -374,12 +354,8 @@ namespace SkyScape.Core
                 // Render to BB with dof
                 _graphics.SetRenderTarget(_mainTarget);
                 _graphics.Clear(Color.Transparent);
-                _depthOfField.Parameters["depthTex"].SetValue(_depthTarget);
-                _depthOfField.Parameters["_Blur"].SetValue(6f);
-                _depthOfField.Parameters["_SampleDistance"].SetValue(0.001f);
-                _depthOfField.Parameters["_Distance"].SetValue(2f);
-                _depthOfField.Parameters["_Range"].SetValue(128f);
-                _depthOfField.Parameters["_Far"].SetValue(_cam.FarClip);
+                _depthOfField.DepthTexture = _depthTarget;
+                _depthOfField.FarClip = _cam.FarClip;
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _depthOfField);
                 _spriteBatch.Draw(_dofTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
@@ -389,11 +365,6 @@ namespace SkyScape.Core
                 _bloom.Parameters["_Amount"].SetValue(0f);
                 _bloom.Parameters["_Treshold"].SetValue(0.8f);
                 _bloom.Parameters["_SampleDistance"].SetValue(0.001f);
-                //_bloom.Parameters["_Blur"].SetValue(0.8f);
-
-                //_spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null);
-                //_spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
-                //_spriteBatch.End();
                 _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, _bloom);
                 _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
@@ -406,6 +377,11 @@ namespace SkyScape.Core
                 _spriteBatch.Draw(_mainTarget, new Rectangle(0, 0, 1280, 720), Color.White);
                 _spriteBatch.End();
             }
+
+
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(_corshair, new Vector2(1280, 720) * 0.5f, null, Color.White, 0f, new Vector2(8, 8), 1f, SpriteEffects.None, 0f);
+            _spriteBatch.End();
 
             DrawUi();
 

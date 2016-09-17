@@ -13,6 +13,7 @@ namespace SkyScape.Core.Cameras
         private Camera _camera;
         private MouseState _oldMouse;
         private float _yaw, _pitch;
+        private float _targetYaw, _targetPitch;
 
         public float HorizontalMultiplier { get; set; } = 1f;
         public float VerticalMultiplier { get; set; } = 1f;
@@ -62,10 +63,16 @@ namespace SkyScape.Core.Cameras
 
             _camera.Transform.Position += transformedDirection * MoveSpeed * moveMultiplier * 0.01f * dt;
 
-            _yaw += horizontal * MouseSpeed * 0.0005f * dt;
-            _pitch += vertical * MouseSpeed * 0.0005f * dt;
+            var smooth = 0.3f;
+
+            _targetYaw += horizontal * MouseSpeed * 0.0005f * dt;
+            _targetPitch += vertical * MouseSpeed * 0.0005f * dt;
+
+            _yaw = MathHelper.Lerp(_yaw,  _targetYaw, smooth);
+            _pitch = MathHelper.Lerp(_pitch, _targetPitch, smooth);
 
             _pitch = MathHelper.Clamp(_pitch, -MathHelper.PiOver2 * 0.99f, MathHelper.PiOver2 * 0.99f);
+            _targetPitch = MathHelper.Clamp(_targetPitch, -MathHelper.PiOver2 * 0.99f, MathHelper.PiOver2 * 0.99f);
 
             const float roll = 0f;
 

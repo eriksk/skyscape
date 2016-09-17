@@ -35,6 +35,16 @@ namespace SkyScape.Core.Voxels
             var position = GetVoxelPosition(worldPosition);
             Set(position, value);
         }
+        public int GetFromPosition(Vector3 worldPosition)
+        {
+            var position = GetVoxelPosition(worldPosition);
+            return Get(position);
+        }
+
+        public Vector3 GetWorldPosition(VoxelPosition worldVoxelPosition)
+        {
+            return new Vector3(worldVoxelPosition.X, worldVoxelPosition.Y, worldVoxelPosition.Z) + new Vector3(0.5f);
+        }
 
         public VoxelPosition GetVoxelPosition(Vector3 worldPosition)
         {
@@ -159,6 +169,31 @@ namespace SkyScape.Core.Voxels
             return new VoxelPosition(localX, localY, localZ);
         }
 
+        public RayCastHit RayCastFirst(Vector3 position, Vector3 direction, float distance)
+        {
+            const float raySegmentStep = 0.5f;
+
+            var current = position;
+            var currentDistance = 0f;
+
+            while(currentDistance < distance)
+            {
+                current = position + direction * currentDistance;
+
+                var voxel = GetFromPosition(current);
+
+                if (voxel != Voxel.Empty)
+                {
+                    var voxelPosition = GetVoxelPosition(current);
+                    return new RayCastHit(true, GetVoxelPosition(current), GetWorldPosition(voxelPosition),  voxel);
+                }
+
+                currentDistance += raySegmentStep;
+            }
+
+            return new RayCastHit(false);
+        }
+
         public void Clean(GraphicsDevice graphics)
         {
             foreach (var chunk in _chunks.Values.ToArray())
@@ -222,6 +257,23 @@ namespace SkyScape.Core.Voxels
             foreach (var chunk in _chunks.Values)
                 chunk.Clear();
             _chunks = new Dictionary<int, Chunk>();
+        }
+    }
+
+    public struct RayCastHit
+    {
+        public VoxelPosition Position;
+        public Vector3 WorldPosition;
+        // Normal?
+        public int VoxelType;
+        public bool Hit;
+
+        public RayCastHit(bool hit, VoxelPosition position = default(VoxelPosition), Vector3 worldPosition = default(Vector3), int voxelType = -1)
+        {
+            Hit = hit;
+            Position = position;
+            VoxelType = voxelType;
+            WorldPosition = worldPosition;
         }
     }
 }

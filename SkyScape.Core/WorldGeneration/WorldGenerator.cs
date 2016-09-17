@@ -49,7 +49,8 @@ namespace SkyScape.Core.WorldGeneration
             if (y > maxHeight)
                 return Voxel.Types[Voxel.Empty];
 
-            var noise = _baseNoise.Noise((float)x, (float)y, (float)z, 0.0467f);
+            var noise = (_baseNoise.Noise((float)x, (float)y, (float)z, 0.0467f) +
+                _baseNoise.Noise((float)x, (float)y, (float)z, 0.1467f)) / 2f;
 
             if(noise < 0f)
                 return Voxel.Types[Voxel.Empty];

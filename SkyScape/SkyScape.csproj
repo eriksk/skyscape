@@ -69,6 +69,7 @@
     <None Include="Content\Gfx\sheet.png" />
     <None Include="Content\Shaders\DepthOfField.fx" />
     <None Include="Content\Shaders\Bloom.fx" />
+    <None Include="Content\Gfx\corshair.png" />
     <Content Include="OpenTK.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
